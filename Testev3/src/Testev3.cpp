@@ -125,6 +125,7 @@ int main()
 	sleep(1);
 	turn_off_pwm();
 	sleep(1);
+	cout << "oi testando";
 
 	//if (!motorE.isRunning())
 
