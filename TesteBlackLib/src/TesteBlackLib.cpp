@@ -12,6 +12,9 @@
 #include <chrono>
 #include "BlackLib/BlackPWM/BlackPWM.h"
 #include "BlackLib/BlackGPIO/BlackGPIO.h"
+#include "BlackLib/BlackThread/BlackThread.h"
+#include "BlackLib/BlackMutex/BlackMutex.h"
+
 using namespace BlackLib;
 using namespace std;
 
@@ -32,6 +35,7 @@ BlackGPIO  	IN3(GPIO_27, output, SecureMode); // esq
 BlackGPIO  	IN4(GPIO_62, output, SecureMode);
 
 double dis;
+BlackMutex *disMutex;
 
 /* inicializacao pwm e portas */
 void setup_PWM(){
@@ -89,7 +93,8 @@ void turn_off_pwm(){
 	motorL.setRunState(stop);
 }
 
-void send_pulse_ultrasound(){
+double send_pulse_ultrasound(){
+	double dist;
 	chrono::duration<double> elapsed;
 	Trig.setValue(low);
 	usleep(2);
@@ -101,13 +106,37 @@ void send_pulse_ultrasound(){
 	while(Echo.isHigh()){}
 	auto finish = chrono::high_resolution_clock::now();
 	elapsed = finish - start;
-	dis = elapsed.count()*346.3/2.0;
+	dist = elapsed.count()*346.3/2.0;
+	return dist;
 }
+
+ class Task1 : public BlackThread
+{
+	public:
+	 	 void onStartHandler()
+       	 {
+			   while(1){
+				   disMutex->lock();
+				   dis = send_pulse_ultrasound();
+				   usleep(100000);
+				   disMutex->unlock();
+			   }
+       	 }
+	 	 void onStopHandler(){
+	 		 disMutex->unlock();
+	 	 }
+};
 
 int main()
 {
-	setup_PWM();
+	disMutex = new BlackMutex();
 	float speed=0;
+
+	Task1 *t1 = new Task1();
+
+	setup_PWM();
+	setup_GPIO();
+	t1->run();
 
 	go_straight_right(50);
 	turn_on_pwm();
@@ -124,8 +153,8 @@ int main()
 	sleep(1);
 	turn_off_pwm();
 	sleep(1);
-	cout << "oi testando";
 
+	t1->waitUntilFinish();
 	//if (!motorE.isRunning())
 
   	//std::cout << "Pwm period time: " << motorE.getPeriodValue() << " nanoseconds \n";
