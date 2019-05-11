@@ -6,7 +6,7 @@ Projeto desenvolvido para disciplina Sistemas Embarcados.
 Queremos simular o funcionamento de um aspirador de pó autônomo comercial: fazer uma varredura inteligente por todo o cômodo, evitando objetos e paredes.
 
 ## Como?
-Uma unidade inercial (IMU) para localização no ambiente e quatro sensores ultrassônicos para detecção de objetos/colisões.
+Uma unidade de medição inercial (IMU) para localização no ambiente e quatro sensores ultrassônicos para detecção de objetos/colisões.
 
 ## Andamento do projeto
 
@@ -20,4 +20,4 @@ Uma unidade inercial (IMU) para localização no ambiente e quatro sensores ultras
 ### Próximos desafios
 
 * **PWM**: circuito com transistor para elevar tensão para 5 V, mas não funcionou bem. Adquirir placas de conversão de nível lógico para contornar o problema.
-* Contagem de tempo para cálculo da distância pelo sensor US: por hardware (utilizando as portas de *timer* da BBB) ou usando **PRU** (Programmable Real-Time Unit)
+* Contagem de tempo para cálculo da distância pelo sensor US: por hardware (utilizando as portas de *timer* da BBB) ou usando **PRU** (Programmable Real-Time Unit).
