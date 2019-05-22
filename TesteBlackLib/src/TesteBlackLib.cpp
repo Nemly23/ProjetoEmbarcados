@@ -29,19 +29,18 @@
 using namespace BlackLib;
 using namespace std;
 
-/* periodo pwm (us) */
+// Periodo do PWM (us).
 #define PeriodTimeMicro 1000
 
-BlackPWM 	motorR(P8_13);
-BlackPWM 	motorL(P8_19);
+// Motores direito e esquerdo.
+BlackPWM motorR(P8_13);
+BlackPWM motorL(P8_19);
 
-/* sensor US */
-
-/* saida para ponte h */
-BlackGPIO  	IN1(GPIO_36, output, SecureMode); // dir
-BlackGPIO  	IN2(GPIO_47, output, SecureMode);
-BlackGPIO  	IN3(GPIO_27, output, SecureMode); // esq
-BlackGPIO  	IN4(GPIO_62, output, SecureMode);
+// Saida para ponte H.
+BlackGPIO IN1(GPIO_36, output, SecureMode); // Motor direito.
+BlackGPIO IN2(GPIO_47, output, SecureMode);
+BlackGPIO IN3(GPIO_27, output, SecureMode); // Motor esquerdo.
+BlackGPIO IN4(GPIO_62, output, SecureMode);
 
 int n = 0;
 int n2 = 0;
@@ -50,11 +49,11 @@ int ret = 1;
 char ch;
 int value = 0;
 chrono::duration<double> elapsed;
-
 double dis;
 
-/* inicializacao pwm e portas */
-void setup_PWM(){
+// Inicializacao do PWM.
+void setup_PWM()
+{
 	motorR.setDutyPercent(100.0);
 	motorR.setPeriodTime(PeriodTimeMicro, microsecond);
 	motorR.setDutyPercent(0);
@@ -65,44 +64,57 @@ void setup_PWM(){
 	motorL.setPolarity(straight);
 }
 
-void setup_GPIO(){
+// Inicializa todas as portas digitais em LOW.
+void setup_GPIO()
+{
 	IN1.setValue(low);
 	IN2.setValue(low);
 	IN3.setValue(low);
 	IN4.setValue(low);
 }
 
-
-void go_straight_right(float speed){
+// Motor direito para frente.
+void go_straight_right(float speed)
+{
 	motorR.setDutyPercent(speed);
 	IN1.setValue(high);
 	IN2.setValue(low);
 }
 
-void go_reverce_right(float speed){
+// Inversao da rotacao do motor direito.
+void go_reverse_right(float speed)
+{
 	motorR.setDutyPercent(speed);
 	IN1.setValue(low);
 	IN2.setValue(high);
 }
 
-void go_straight_left(float speed){
+// Motor esquerdo para frente.
+void go_straight_left(float speed)
+{
 	motorL.setDutyPercent(speed);
 	IN3.setValue(high);
 	IN4.setValue(low);
 }
 
-void go_reverce_left(float speed){
+// Inversao da rotacao do motor esquerdo.
+void go_reverse_left(float speed)
+{
 	motorR.setDutyPercent(speed);
 	IN3.setValue(low);
 	IN4.setValue(high);
 }
 
-void turn_on_pwm(){
+// Liga PWM.
+void turn_on_pwm()
+{
 	motorR.setRunState(run);
 	motorL.setRunState(run);
 }
 
-void turn_off_pwm(){
+// Para o PWM.
+void turn_off_pwm()
+{
 	motorR.setRunState(stop);
 	motorL.setRunState(stop);
 }
@@ -116,10 +128,13 @@ void segue_10cm(){
 }
 */
 
-/* recebe sinal echo do sensor e faz processamento; calcula a distancia. */
-void receive_pulse_ultrasound(string pin_path){
+// Recebe sinal ECHO do sensor US e faz processamento; calcula a distancia.
+void receive_pulse_ultrasound(string pin_path)
+{
+    // Pulso ECHO em LOW.
 	while (value == 0 && n2 < 100)
 	{
+        // Erro na abertura do diretorio com valor do pulso.
 		if ((fd = open(pin_path.c_str(), O_RDONLY | O_NONBLOCK)) < 0)
 		{
 			cout << "erro_open" << endl;
@@ -127,6 +142,7 @@ void receive_pulse_ultrasound(string pin_path){
 			continue;
 		}
 
+        // Erro na leitura do valor.
 		ret = read(fd, &ch, sizeof(ch));
 		if (ret < 0)
 		{
@@ -135,6 +151,7 @@ void receive_pulse_ultrasound(string pin_path){
 			continue;
 		}
 
+        // Se valor do pulso muda, sai do loop.
 		if (ch != '0')
 		{
 			value = 1;
@@ -148,10 +165,14 @@ void receive_pulse_ultrasound(string pin_path){
 		close(fd);
 	}
 	//cout << n2 << endl;
+
+    // Inicia contador de tempo para ECHO em HIGH.
 	auto start = chrono::high_resolution_clock::now();
 
+    // ECHO em HIGH; continua no loop enquanto sinal nao e recebido de volta.
 	while (value == 1 && n < 100)
 	{
+        // Erro na abertura do diretorio com valor do pulso.
 		if ((fd = open(pin_path.c_str(), O_RDONLY | O_NONBLOCK)) < 0)
 		{
 			cout << "erro_open" << endl;
@@ -159,6 +180,7 @@ void receive_pulse_ultrasound(string pin_path){
 			continue;
 		}
 
+        // Erro na leitura do valor.
 		ret = read(fd, &ch, sizeof(ch));
 		if (ret < 0)
 		{
@@ -167,6 +189,7 @@ void receive_pulse_ultrasound(string pin_path){
 			continue;
 		}
 
+        // Se valor do pulso muda, sai do loop.
 		if (ch != '0')
 		{
 			value = 1;
@@ -183,88 +206,93 @@ void receive_pulse_ultrasound(string pin_path){
 	auto finish = chrono::high_resolution_clock::now();
 	elapsed = finish - start;
 
-	if (n2 == 100 && n == 0){
+    // Erro se nao entra no segundo loop e da timeout no primeiro.
+	if (n2 == 100 && n == 0)
+	{
 		cout << "erro_receive" << endl;
 	}
 
-	dis = elapsed.count()*346.3/2.0;
-	//cout << elapsed.count() << "s" << endl;
+    // Distancia do obstaculo em metros.
+	dis = elapsed.count() * 346.3 / 2.0;
+	//cout << elapsed.count() << " s" << endl;
 }
 
- class Task1 : public BlackThread
+// Thread para controle dos 3 USs.
+class Task1 : public BlackThread
 {
-	public:
-	 	 void onStartHandler()
-       	 {
-	 		int i = 0;
+public:
+	void onStartHandler()
+	{
+		int i = 0;
 
-	 		string pin1_path = "/sys/class/gpio/gpio44/value";
-	 		string pin2_path = "/sys/class/gpio/gpio68/value";
-	 		string pin3_path = "/sys/class/gpio/gpio67/value";
+        // Diretorio de cada US.
+		string pin1_path = "/sys/class/gpio/gpio44/value";
+		string pin2_path = "/sys/class/gpio/gpio68/value";
+		string pin3_path = "/sys/class/gpio/gpio67/value";
 
-			BlackGPIO trig1(GPIO_45, output, SecureMode);
-			BlackGPIO echo1(GPIO_44, input, SecureMode);
-			BlackGPIO trig2(GPIO_69, output, SecureMode);
-			BlackGPIO echo2(GPIO_68, input, SecureMode);
-			BlackGPIO trig3(GPIO_66, output, SecureMode);
-			BlackGPIO echo3(GPIO_67, input, SecureMode);
+		BlackGPIO trig1(GPIO_45, output, SecureMode);
+		BlackGPIO echo1(GPIO_44, input, SecureMode);
 
-			/* US 1 */
-			while (i < 100)
-			{
+		BlackGPIO trig2(GPIO_69, output, SecureMode);
+		BlackGPIO echo2(GPIO_68, input, SecureMode);
 
-				n = 0;
-				n2 = 0;
-				value = 0;
+		BlackGPIO trig3(GPIO_66, output, SecureMode);
+		BlackGPIO echo3(GPIO_67, input, SecureMode);
 
-				trig1.setValue(low);
-				usleep(2);
-				trig1.setValue(high);
-				//usleep(10);
-				trig1.setValue(low);
+		while (i < 100)
+		{
+            // US 1.
+			n = 0;
+			n2 = 0;
+			value = 0;
 
-				receive_pulse_ultrasound(pin1_path);
-				cout << dis << " m 1" << endl;
-				//cout << value << endl;
+			trig1.setValue(low);
+			usleep(2);
+			trig1.setValue(high);
+			//usleep(10);
+			trig1.setValue(low);
 
+			receive_pulse_ultrasound(pin1_path);
+			cout << dis << " m (1)" << endl;
+			//cout << value << endl;
 
-				/* US 2 */
+			// US 2.
+			n = 0;
+			n2 = 0;
+			value = 0;
 
-				n = 0;
-				n2 = 0;
-				value = 0;
+			trig2.setValue(low);
+			usleep(2);
+			trig2.setValue(high);
+			//usleep(10);
+			trig2.setValue(low);
 
-				trig2.setValue(low);
-				usleep(2);
-				trig2.setValue(high);
-				//usleep(10);
-				trig2.setValue(low);
+			receive_pulse_ultrasound(pin2_path);
+			cout << dis << " m (2)" << endl;
+			//cout << value << endl;
 
-				receive_pulse_ultrasound(pin2_path);
-				cout << dis << " m 2" << endl;
-				//cout << value << endl;
-				/* US 3 */
+			// US 3.
+			n = 0;
+			n2 = 0;
+			value = 0;
 
-				n = 0;
-				n2 = 0;
-				value = 0;
+			trig3.setValue(low);
+			usleep(2);
+			trig3.setValue(high);
+			//usleep(10);
+			trig3.setValue(low);
 
-				trig3.setValue(low);
-				usleep(2);
-				trig3.setValue(high);
-				//usleep(10);
-				trig3.setValue(low);
+			receive_pulse_ultrasound(pin3_path);
+			cout << dis << " m (3)" << endl;
+			//cout << value << endl;
+			usleep(100000);
+			i++;
+		}
+	}
 
-				receive_pulse_ultrasound(pin3_path);
-				cout << dis << " m 3" << endl;
-				//cout << value << endl;
-				usleep(100000);
-				i++;
-			}
-       	 }
-
-	 	 void onStopHandler(){
-	 	 }
+	void onStopHandler()
+	{
+	}
 };
 
 int main()
@@ -272,6 +300,7 @@ int main()
 
 	float speed = 0;
 
+    // Thread de US.
 	Task1 *t1 = new Task1();
 
 	//setup_PWM();
@@ -282,6 +311,6 @@ int main()
 	t1->waitUntilFinish();
 	//if (!motorE.isRunning())
 
-  	//std::cout << "Pwm period time: " << motorE.getPeriodValue() << " nanoseconds \n";
-    return 0;
+	//std::cout << "Pwm period time: " << motorE.getPeriodValue() << " nanoseconds \n";
+	return 0;
 }
