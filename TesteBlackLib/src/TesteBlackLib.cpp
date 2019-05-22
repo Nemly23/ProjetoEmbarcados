@@ -38,10 +38,12 @@ BlackPWM 	motorL(P8_19);
 /* sensor US */
 
 /* saida para ponte h */
-BlackGPIO  	IN1(GPIO_36, output, SecureMode); // dir
-BlackGPIO  	IN2(GPIO_47, output, SecureMode);
-BlackGPIO  	IN3(GPIO_27, output, SecureMode); // esq
-BlackGPIO  	IN4(GPIO_62, output, SecureMode);
+BlackGPIO  	IN1(GPIO_65, output, SecureMode); // dir
+BlackGPIO  	IN2(GPIO_27, output, SecureMode);
+BlackGPIO  	IN3(GPIO_47, output, SecureMode); // esq
+BlackGPIO  	IN4(GPIO_46, output, SecureMode);
+
+BlackGPIO  	button(GPIO_26, input, SecureMode);
 
 int n = 0;
 int n2 = 0;
@@ -49,6 +51,12 @@ int fd;
 int ret = 1;
 char ch;
 int value = 0;
+
+float x_mag = 0;
+float z_mag = 0;
+float y_mag = 0;
+
+
 chrono::duration<double> elapsed;
 
 double dis;
@@ -74,27 +82,27 @@ void setup_GPIO(){
 
 
 void go_straight_right(float speed){
-	motorR.setDutyPercent(speed);
+	motorR.setDutyPercent(100-speed);
 	IN1.setValue(high);
 	IN2.setValue(low);
 }
 
 void go_reverce_right(float speed){
-	motorR.setDutyPercent(speed);
+	motorR.setDutyPercent(100-speed);
 	IN1.setValue(low);
 	IN2.setValue(high);
 }
 
 void go_straight_left(float speed){
-	motorL.setDutyPercent(speed);
-	IN3.setValue(high);
-	IN4.setValue(low);
+	motorL.setDutyPercent(100-speed);
+	IN3.setValue(low);
+	IN4.setValue(high);
 }
 
 void go_reverce_left(float speed){
-	motorR.setDutyPercent(speed);
-	IN3.setValue(low);
-	IN4.setValue(high);
+	motorR.setDutyPercent(100-speed);
+	IN3.setValue(high);
+	IN4.setValue(low);
 }
 
 void turn_on_pwm(){
@@ -209,8 +217,26 @@ void receive_pulse_ultrasound(string pin_path){
 			BlackGPIO trig3(GPIO_66, output, SecureMode);
 			BlackGPIO echo3(GPIO_67, input, SecureMode);
 
+
+			uint8_t read_buffer[13] = {0};
+			uint8_t register_value = 0x00; //Value of first register
+			uint8_t readBlockSize;
+
+			BlackI2C  myI2c(I2C_2, 0x1E);
+
+			myI2c.open( ReadWrite);
+			bool resultOfWrite          = myI2c.writeByte(0x00, 0x70);
+			std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
+			resultOfWrite          = myI2c.writeByte(0x01, 0xA0);
+			std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
+			resultOfWrite          = myI2c.writeByte(0x02, 0x00);
+			std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
+
+			int count = 0;		//Counter for alternating shifts
+			short value2=0;
+
 			/* US 1 */
-			while (i < 100)
+			while (!button.isHigh())
 			{
 
 				n = 0;
@@ -258,6 +284,41 @@ void receive_pulse_ultrasound(string pin_path){
 				receive_pulse_ultrasound(pin3_path);
 				cout << dis << " m 3" << endl;
 				//cout << value << endl;
+
+				/*Using I2C read*/
+
+				readBlockSize  = myI2c.readBlock(register_value, read_buffer, sizeof(read_buffer) );
+				//std::cout << "Total read block size: " << (int)readBlockSize << std::endl;
+				if (readBlockSize!=13){
+					cout << "erro_read_I2C" << endl;
+				}
+				else {
+					//printf("Looks like the I2C bus is operational! \n");
+					for (int j=3; j<9; j++) {
+						value2 = value2 | read_buffer[j];	//OR read_buffer into lower byte
+						if (count%2 == 0)	//Shift 8 bits every other loop
+							value2 = value2 << 8;
+						else {
+							cout << value2 << "	";
+							if (count == 1){
+								x_mag = value2;
+							}
+							else if (count == 3){
+								z_mag = value2;
+							}
+							else{
+								y_mag = value2;
+							}
+							value2 = 0;
+						}//end if
+						count++;
+					}// end for
+
+					count = 0;
+				}//end else
+				cout << endl;
+				//usleep(DELAY); //500 ms
+
 				usleep(100000);
 				i++;
 			}
@@ -269,19 +330,63 @@ void receive_pulse_ultrasound(string pin_path){
 
 int main()
 {
-
+	int i=0;
 	float speed = 0;
 
 	Task1 *t1 = new Task1();
 
-	//setup_PWM();
-	//setup_GPIO();
+	setup_PWM();
+	setup_GPIO();
 
 	t1->run();
 
+	while (!button.isHigh()){
+		cout << button.isHigh() << endl;
+		go_straight_right(30);
+		cout << "Right_30" << endl;
+		turn_on_pwm();
+		sleep(1);
+		turn_off_pwm();
+		sleep(1);
+		go_straight_right(60);
+		cout << "Right_60" << endl;
+		turn_on_pwm();
+		sleep(1);
+		turn_off_pwm();
+		sleep(1);
+		go_straight_right(100);
+		cout << "Right_100" << endl;
+		cout << button.isHigh() << endl;
+		turn_on_pwm();
+		sleep(1);
+		go_straight_right(0);
+		turn_off_pwm();
+		sleep(1);
+		go_straight_left(30);
+		cout << "Left_30" << endl;
+		turn_on_pwm();
+		sleep(1);
+		turn_off_pwm();
+		sleep(1);
+		go_straight_left(60);
+		cout << "Left_60" << endl;
+		turn_on_pwm();
+		sleep(1);
+		turn_off_pwm();
+		sleep(1);
+		go_straight_left(100);
+		cout << "Left_100" << endl;
+		turn_on_pwm();
+		sleep(1);
+		go_straight_left(0);
+		turn_off_pwm();
+		sleep(1);
+		i++;
+	}
+	turn_off_pwm();
 	t1->waitUntilFinish();
 	//if (!motorE.isRunning())
-
+	cout << "programa_finalizado";
   	//std::cout << "Pwm period time: " << motorE.getPeriodValue() << " nanoseconds \n";
     return 0;
 }
