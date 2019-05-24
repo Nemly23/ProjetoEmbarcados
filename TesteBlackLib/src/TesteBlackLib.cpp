@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <time.h>
+#include <math.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +32,8 @@ using namespace std;
 
 // Periodo do PWM (us).
 #define PeriodTimeMicro 1000
+#define max_speed 80
+float constant_speed = 60;
 
 // Motores direito e esquerdo.
 BlackPWM motorR(P8_13);
@@ -51,24 +54,32 @@ int fd;
 int ret = 1;
 char ch;
 int value = 0;
+bool stop_flag=false;
+bool turn_flag=false;
 
-float x_mag = 0;
-float z_mag = 0;
-float y_mag = 0;
+float angle_mag;
+
 double dis;
+double dis_right = 1;
+double dis_left = 1;
+double dis_front = 1;
+
+double angle_base = 0;
 
 chrono::duration<double> elapsed;
+chrono::duration<double> elapsed2;
+auto start_dis = chrono::high_resolution_clock::now();
+auto stop_dis = chrono::high_resolution_clock::now();
+
 
 // Inicializacao do PWM.
 void setup_PWM()
 {
     motorR.setDutyPercent(100.0);
     motorR.setPeriodTime(PeriodTimeMicro, microsecond);
-    motorR.setDutyPercent(0);
     motorR.setPolarity(straight);
     motorL.setDutyPercent(100.0);
     motorL.setPeriodTime(PeriodTimeMicro, microsecond);
-    motorL.setDutyPercent(0);
     motorL.setPolarity(straight);
 }
 
@@ -84,6 +95,9 @@ void setup_GPIO()
 // Motor direito para frente.
 void go_straight_right(float speed)
 {
+	if (speed>max_speed){
+		speed = max_speed;
+	}
     motorR.setDutyPercent(100 - speed);
     IN1.setValue(high);
     IN2.setValue(low);
@@ -92,6 +106,9 @@ void go_straight_right(float speed)
 // Inversao da rotacao do motor direito.
 void go_reverse_right(float speed)
 {
+	if (speed>max_speed){
+		speed = max_speed;
+	}
     motorR.setDutyPercent(100 - speed);
     IN1.setValue(low);
     IN2.setValue(high);
@@ -100,6 +117,9 @@ void go_reverse_right(float speed)
 // Motor esquerdo para frente.
 void go_straight_left(float speed)
 {
+	if (speed>max_speed){
+		speed = max_speed;
+	}
     motorL.setDutyPercent(100 - speed);
     IN3.setValue(low);
     IN4.setValue(high);
@@ -108,9 +128,21 @@ void go_straight_left(float speed)
 // Inversao da rotacao do motor esquerdo.
 void go_reverse_left(float speed)
 {
+	if (speed>max_speed){
+		speed = max_speed;
+	}
     motorR.setDutyPercent(100 - speed);
     IN3.setValue(high);
     IN4.setValue(low);
+}
+
+void stop_motor(){
+	motorR.setDutyPercent(100);
+	motorR.setDutyPercent(100);
+	IN1.setValue(low);
+	IN2.setValue(low);
+	IN3.setValue(low);
+	IN4.setValue(low);
 }
 
 // Liga PWM.
@@ -137,8 +169,22 @@ void segue_10cm(){
 }
 */
 
+void verify_proximity(float speed){
+	if (dis_front < 0.30){
+		stop_flag = true;
+		stop_motor();
+	}
+	else if(dis_front < 0.60){
+		speed = speed*0.8;
+		stop_flag = false;
+	}
+	else{
+		stop_flag = false;
+	}
+}
+
 // Recebe sinal ECHO do sensor US e faz processamento; calcula a distancia.
-void receive_pulse_ultrasound(string pin_path)
+int receive_pulse_ultrasound(string pin_path)
 {
     // Pulso ECHO em LOW.
     while (value == 0 && n2 < 100)
@@ -148,7 +194,7 @@ void receive_pulse_ultrasound(string pin_path)
         {
             cout << "erro_open" << endl;
             n++;
-            continue;
+            return -1;
         }
 
         // Erro na leitura do valor.
@@ -186,7 +232,7 @@ void receive_pulse_ultrasound(string pin_path)
         {
             cout << "erro_open" << endl;
             n++;
-            continue;
+            return -1;
         }
 
         // Erro na leitura do valor.
@@ -219,10 +265,13 @@ void receive_pulse_ultrasound(string pin_path)
     if (n2 == 100 && n == 0)
     {
         cout << "erro_receive" << endl;
+        return -1;
     }
-
-    // Distancia ate obstaculo em metros.
-    dis = elapsed.count() * 346.3 / 2.0;
+    else {
+    	// Distancia ate obstaculo em metros.
+    	dis = elapsed.count() * 346.3 / 2.0;
+    }
+    return 0;
     //cout << elapsed.count() << " s" << endl;
 }
 
@@ -233,6 +282,7 @@ public:
     void onStartHandler()
     {
         int i = 0;
+        int erro = 0;
 
         // Diretorio de cada US.
         string pin1_path = "/sys/class/gpio/gpio44/value";
@@ -256,6 +306,10 @@ public:
         uint8_t register_value = 0x00; // Primeiro registrador.
         uint8_t readBlockSize;
 
+        float x_mag = 0;
+        float z_mag = 0;
+        float y_mag = 0;
+
         // Inicia comunicacao I2C com magnetometro (endereco 0x1E).
         BlackI2C myI2c(I2C_2, 0x1E);
 
@@ -278,6 +332,7 @@ public:
 
         while (!button.isHigh())
         {
+
             // US 1.
             n = 0;
             n2 = 0;
@@ -292,6 +347,8 @@ public:
 
             // Espera ECHO.
             receive_pulse_ultrasound(pin1_path);
+            dis_front = dis*100;
+
             cout << dis << " m (1)" << endl;
             //cout << value << endl;
 
@@ -309,6 +366,7 @@ public:
 
             // Espera ECHO.
             receive_pulse_ultrasound(pin2_path);
+            dis_right = dis*100;
             cout << dis << " m (2)" << endl;
             //cout << value << endl;
 
@@ -326,6 +384,7 @@ public:
 
             // Espera ECHO.
             receive_pulse_ultrasound(pin3_path);
+            dis_left = dis*100;
             cout << dis << " m (3)" << endl;
             //cout << value << endl;
 
@@ -374,6 +433,8 @@ public:
             }
             cout << endl;
             //usleep(DELAY); //500 ms
+            angle_mag = atan2(x_mag, y_mag)/M_PI*180 - angle_base;
+            cout << "angle" << angle_mag << "degres" << endl;
 
             usleep(100000);
             i++;
@@ -385,78 +446,212 @@ public:
     }
 };
 
+int change_function(int function){
+	if (function==7){
+		return 1;
+	}
+	return (function+1);
+}
+
+float turn_90(int modo){
+	float adjust=0.5*max_speed;
+	float angle_ref;
+	stop_flag = true;
+	switch(modo){
+		case 0:
+			angle_ref = -90 - angle_mag;
+			break;
+		case 1:
+			angle_ref = 90 - angle_mag;
+			break;
+		case 2:
+			angle_ref = 180 - angle_mag;
+			break;
+		case 3:
+			angle_ref = 0 - angle_mag;
+			break;
+	}
+	if (angle_ref>180){
+		angle_ref -= 360;
+	}
+	if (angle_ref<-180){
+		angle_ref += 360;
+	}
+	if (angle_ref<30 && angle_ref>-30){
+		adjust *= 0.8;
+	}
+	if (angle_ref<2 && angle_ref>-2){
+		adjust = 0;
+		turn_flag = false;
+	}
+	if (angle_ref>0){
+		return adjust;
+	}else{
+		return -adjust;
+	}
+
+}
+
+float follow_direction(int dir, float *error_i){
+	float adjust=0;
+	float angle_ref;
+	float Kp = 3;
+	float Ki = 0.1;
+	float dis_time = 2;
+	//float Kd = 0;
+
+	switch(dir){
+		case 0:
+			angle_ref = -90 - angle_mag;
+			break;
+		case 1:
+			angle_ref = 90 - angle_mag;
+			break;
+		case 2:
+			angle_ref = 180 - angle_mag;
+			break;
+		case 3:
+			angle_ref = 0 - angle_mag;
+			break;
+	}
+	*error_i += angle_ref;
+	stop_dis = chrono::high_resolution_clock::now();
+	elapsed2 = stop_dis - start_dis;
+	if (elapsed2.count()> dis_time && dir%2==0){
+		turn_flag = false;
+		stop_flag = true;
+		return 0;
+	}
+	adjust = Kp*angle_ref + Ki*(*error_i);
+	return adjust;
+}
+
 int main()
 {
     int i = 0;
-    float speed = 0;
+    float speed_right = 0;
+    float speed_left = 0;
+    float adjustment = 0;
+    int function = 0;
+    float dis_stop = 0.2;
+    float dis_red = 0.6;
+    float error_i = 0;
+
 
     Task1 *t1 = new Task1();
 
     setup_PWM();
     setup_GPIO();
-
     t1->run();
 
+    turn_on_pwm();
     while (!button.isHigh())
     {
-        cout << button.isHigh() << endl;
-        go_straight_right(30);
-        cout << "Right_30" << endl;
+    	if (function==0){
+    		//adjustment = follow_wall();
+    		speed_left = constant_speed - adjustment;
+    		speed_right = constant_speed + adjustment;
+    	}
 
-        turn_on_pwm();
-        sleep(1);
-        turn_off_pwm();
-        sleep(1);
+    	if (function==1){
+			adjustment = turn_90(0);
+    		// Giro em torno do centro.
+    		// Alinhamento com leste.
+			speed_left = -adjustment;
+			speed_right = adjustment;
+		}
 
-        go_straight_right(60);
-        cout << "Right_60" << endl;
+    	if (function==2){
+    		adjustment = follow_direction(0, &error_i);
+			// Passo ate proxima linha de limpeza.
+    		stop_flag = true;
+			speed_left = constant_speed - adjustment;
+			speed_right = constant_speed + adjustment;
+		}
 
-        turn_on_pwm();
-        sleep(1);
-        turn_off_pwm();
-        sleep(1);
+    	if (function==3){
+			adjustment = turn_90(2);
+    		// Alinhamento com sul.
+			speed_left = -adjustment;
+			speed_right = adjustment;
+		}
 
-        go_straight_right(100);
-        cout << "Right_100" << endl;
-        cout << button.isHigh() << endl;
+    	if (function==4){
+    		adjustment = follow_direction(2, &error_i);
+			// Segue sul ate encontrar parede.
+    		turn_flag = false;
+    		speed_left = constant_speed - adjustment;
+    		speed_right = constant_speed + adjustment;
+		}
 
-        turn_on_pwm();
-        sleep(1);
-        go_straight_right(0);
-        turn_off_pwm();
-        sleep(1);
+    	if (function==5){
+			adjustment = turn_90(1);
+    		// Alinhamento com oeste.
+			speed_left = -adjustment;
+			speed_right = adjustment;
+		}
 
-        go_straight_left(30);
-        cout << "Left_30" << endl;
+    	if (function==6){
+    		adjustment = follow_direction(1, &error_i);
+    		// Passo ate proxima linha de limpeza.
+    		stop_flag = true;
+    		speed_left = constant_speed - adjustment;
+			speed_right = constant_speed + adjustment;
+		}
 
-        turn_on_pwm();
-        sleep(1);
-        turn_off_pwm();
-        sleep(1);
+    	if (function==7){
+			adjustment = turn_90(3);
+    		// Alinhamento com norte (volta para estado inicial).
+			speed_left = -adjustment;
+			speed_right = adjustment;
+		}
 
-        go_straight_left(60);
-        cout << "Left_60" << endl;
+    	if (function==8){
+    		adjustment = follow_direction(3, &error_i);
+			// Segue norte ate encontrar parede.
+    		turn_flag = false;
+    		speed_left = constant_speed - adjustment;
+			speed_right = constant_speed + adjustment;
+		}
 
-        turn_on_pwm();
-        sleep(1);
-        turn_off_pwm();
-        sleep(1);
+    	if (function==9){
+			// Funcao final.
+		}
 
-        go_straight_left(100);
-        cout << "Left_100" << endl;
-
-        turn_on_pwm();
-        sleep(1);
-
-        go_straight_left(0);
-
-        turn_off_pwm();
-        sleep(1);
-
-        i++;
+    	if (dis_front < dis_stop && stop_flag==false){
+    		stop_flag = true;
+    		stop_motor();
+    	}
+    	else {
+    		if(dis_front < dis_red){
+    			speed_right = speed_right*0.8;
+    			speed_left = speed_left*0.8;
+    		}
+			if (speed_right>0){
+				go_straight_right(speed_right);
+			}
+			else{
+				go_reverse_right(-speed_right);
+			}
+			if (speed_left>0){
+				go_straight_left(speed_right);
+			}
+			else{
+				go_reverse_left(-speed_right);
+			}
+    	}
+    	if (stop_flag == true && turn_flag == false){
+    		stop_motor();
+    		function = change_function(function);
+    		error_i = 0;
+    		start_dis = chrono::high_resolution_clock::now();
+    		turn_flag = true;
+    		stop_flag = false;
+    	}
+    	usleep(50*1000);
     }
-
     turn_off_pwm();
+
     t1->waitUntilFinish();
 
     //if (!motorE.isRunning())
