@@ -39,15 +39,27 @@ float constant_speed = 60; // Velocidade base.
 
 enum functionNumber{
     parede = 0,
-    leste = 1,
+    giraLeste = 1,
     stepLeste = 2,
-    sul = 3,
+    giraSul = 3,
     segueSul = 4,
-    oeste = 5,
+    giraOeste = 5,
     stepOeste = 6,
-    norte = 7,
+    giraNorte = 7,
     segueNorte = 8,
-    fim = 9
+    fimSul = 9,
+	fimNorte = 10
+};
+enum mode{
+    leste = 0,
+	oeste = 1,
+    sul = 2,
+    norte = 3
+};
+
+enum ladoParede{
+    esquerda = false,
+	direita = true,
 };
 
 // Motores direito e esquerdo.
@@ -71,6 +83,7 @@ char ch;
 int value = 0;
 bool stop_flag = false;
 bool turn_flag = false;
+bool fim_flag = true;
 
 float angle_mag;
 
@@ -373,7 +386,7 @@ public:
             receive_pulse_ultrasound(pin1_path);
             dis_front = dis * 100;
 
-            cout << dis << " m (1)" << endl;
+            cout << dis << " cm (1)" << endl;
             //cout << value << endl;
 
             // US 2.
@@ -391,7 +404,7 @@ public:
             // Espera ECHO.
             receive_pulse_ultrasound(pin2_path);
             dis_right = dis * 100;
-            cout << dis << " m (2)" << endl;
+            cout << dis << " cm (2)" << endl;
             //cout << value << endl;
 
             // US 3.
@@ -409,7 +422,7 @@ public:
             // Espera ECHO.
             receive_pulse_ultrasound(pin3_path);
             dis_left = dis * 100;
-            cout << dis << " m (3)" << endl;
+            cout << dis << " cm (3)" << endl;
             //cout << value << endl;
 
             // Leitura do magnetometro.
@@ -473,32 +486,40 @@ public:
 // Faz switch das funcoes na ordem da ocorrencia dos eventos
 int change_function(int function)
 {
-    if (function == 7)
+    if (function == segueNorte)
     {
-        return 1;
+        return leste;
+    }
+    if (function == giraSul)
+    {
+    	return fimSul;
+    }
+    if (function == giraNorte)
+    {
+    	return fimNorte;
     }
     return (function + 1);
 }
 
 // Rotacao de 90 graus.
-float turn_90(int modo)
+float turn_90(mode m)
 {
     float adjust = 0.5 * max_speed;
     float angle_ref;
     stop_flag = true;
 
-    switch (modo)
+    switch (m)
     {
-    case 0:
+    case leste:
         angle_ref = -90 - angle_mag;
         break;
-    case 1:
+    case oeste:
         angle_ref = 90 - angle_mag;
         break;
-    case 2:
+    case sul:
         angle_ref = 180 - angle_mag;
         break;
-    case 3:
+    case norte:
         angle_ref = 0 - angle_mag;
         break;
     }
@@ -535,7 +556,7 @@ float turn_90(int modo)
 }
 
 // Segue em caminho reto.
-float follow_direction(int dir, float *error_i)
+float follow_direction(mode dir, float *error_i)
 {
     float adjust = 0;
     float angle_ref;
@@ -543,20 +564,20 @@ float follow_direction(int dir, float *error_i)
     float Ki = 0.1;
     float dis_time = 2;
     //float Kd = 0;
-
+    turn_flag = false;
     // Angulo inicial do movimento tomado como referencia. Setpoint do controle e o angulo zero, entao angle_ref e o proprio erro nas iteracoes seguintes.
     switch (dir)
     {
-    case 0:
+    case leste:
         angle_ref = -90 - angle_mag;
         break;
-    case 1:
+    case oeste:
         angle_ref = 90 - angle_mag;
         break;
-    case 2:
+    case sul:
         angle_ref = 180 - angle_mag;
         break;
-    case 3:
+    case norte:
         angle_ref = 0 - angle_mag;
         break;
     }
@@ -568,7 +589,6 @@ float follow_direction(int dir, float *error_i)
 
     if (elapsed2.count() > dis_time && dir % 2 == 0)
     {
-        turn_flag = false;
         stop_flag = true;
         return 0;
     }
@@ -577,16 +597,36 @@ float follow_direction(int dir, float *error_i)
     return adjust;
 }
 
+float follow_wall(float *error_i, float *angle_soma, int *count, ladoParede lado){
+	float adjust = 0;
+	float dis_ref=10;
+	float Kp = 7;
+	float Ki = 0.2;
+	*angle_soma += angle_mag;
+	*count += 1;
+	if (lado == esquerda){
+		dis_ref = dis_ref - dis_left;
+	}
+	else{
+		dis_ref = dis_ref - dis_right;
+	}
+	adjust = Kp * dis_ref + Ki * (*error_i);
+	return -adjust;
+}
+
 int main()
 {
     int i = 0;
     float speed_right = 0;
     float speed_left = 0;
     float adjustment = 0;
-    int function = 0;
-    float dis_stop = 0.2;
-    float dis_red = 0.6;
+    int function = parede;
+    float dis_stop = 20;
+    float dis_slow = 60;
     float error_i = 0;
+    float angle_soma=0;
+    int count=0;
+    ladoParede lado = esquerda;
 
     Task1 *t1 = new Task1();
 
@@ -597,95 +637,115 @@ int main()
     turn_on_pwm();
     while (!button.isHigh())
     {
-        if (function == 0)
+        if (function == parede)
         {
-            //adjustment = follow_wall();
+            adjustment = follow_wall(&error_i, &angle_soma, &count, lado);
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
         }
 
-        if (function == 1)
+        if (function == giraLeste)
         {
-            adjustment = turn_90(0);
+            adjustment = turn_90(leste);
             // Giro em torno do centro.
-            // Alinhamento com leste.
+            // Alinhamento com giraleste.
             speed_left = -adjustment;
             speed_right = adjustment;
         }
 
-        if (function == 2)
+        if (function == stepLeste)
         {
-            adjustment = follow_direction(0, &error_i);
+            adjustment = follow_direction(leste, &error_i);
             // Passo ate proxima linha de limpeza.
-            stop_flag = true;
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
         }
 
-        if (function == 3)
+        if (function == giraSul)
         {
-            adjustment = turn_90(2);
+            adjustment = turn_90(sul);
             // Alinhamento com sul.
             speed_left = -adjustment;
             speed_right = adjustment;
         }
 
-        if (function == 4)
+        if (function == segueSul)
         {
-            adjustment = follow_direction(2, &error_i);
+            adjustment = follow_direction(sul, &error_i);
             // Segue sul ate encontrar parede.
-            turn_flag = false;
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
         }
 
-        if (function == 5)
+        if (function == giraOeste)
         {
-            adjustment = turn_90(1);
+            adjustment = turn_90(leste);
             // Alinhamento com oeste.
             speed_left = -adjustment;
             speed_right = adjustment;
         }
 
-        if (function == 6)
+        if (function == stepOeste)
         {
-            adjustment = follow_direction(1, &error_i);
+            adjustment = follow_direction(leste, &error_i);
             // Passo ate proxima linha de limpeza.
-            stop_flag = true;
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
         }
 
-        if (function == 7)
+        if (function == giraNorte)
         {
-            adjustment = turn_90(3);
+            adjustment = turn_90(norte);
             // Alinhamento com norte (volta para estado inicial).
             speed_left = -adjustment;
             speed_right = adjustment;
         }
 
-        if (function == 8)
+        if (function == segueNorte)
         {
-            adjustment = follow_direction(3, &error_i);
+            adjustment = follow_direction(norte, &error_i);
             // Segue norte ate encontrar parede.
-            turn_flag = false;
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
         }
 
-        if (function == 9)
+        if (function == fimSul)
         {
             // Funcao final.
+        	adjustment = follow_wall(&error_i, &angle_soma, &count, lado);
+			speed_left = constant_speed - adjustment;
+			speed_right = constant_speed + adjustment;
         }
+
+        if (function == fimNorte)
+		{
+			// Funcao final.
+        	if (lado == esquerda)
+        		adjustment = follow_wall(&error_i, &angle_soma, &count, direita);
+        	else
+        		adjustment = follow_wall(&error_i, &angle_soma, &count, esquerda);
+			speed_left = constant_speed - adjustment;
+			speed_right = constant_speed + adjustment;
+
+		}
 
         if (dis_front < dis_stop && stop_flag == false)
         {
             stop_flag = true;
             stop_motor();
+            if (function == parede){
+            	angle_base = angle_soma/count;
+            }
+            if (function == stepLeste || function == stepOeste){
+                fim_flag = true;
+            }
+            if (function == fimSul || function == fimNorte){
+            	break;
+            }
         }
         else
         {
-            if (dis_front < dis_red)
+            if (dis_front < dis_slow)
             {
                 speed_right = speed_right * 0.8;
                 speed_left = speed_left * 0.8;
@@ -713,14 +773,14 @@ int main()
             function = change_function(function);
             error_i = 0;
             start_dis = chrono::high_resolution_clock::now();
-            turn_flag = true;
-            stop_flag = false;
+            turn_flag = false;
+            stop_flag = true;
         }
         usleep(50 * 1000);
     }
     turn_off_pwm();
 
-    t1->waitUntilFinish();
+    t1->stop();
 
     //if (!motorE.isRunning())
     cout << "programa_finalizado";
