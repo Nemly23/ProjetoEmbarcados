@@ -34,8 +34,8 @@ using namespace std;
 #define PeriodTimeMicro 1000
 
 // Percentual maximo para velocidade.
-#define max_speed 80
-float constant_speed = 60; // Velocidade base.
+#define max_speed 100
+float constant_speed = 80; // Velocidade base.
 
 enum functionNumber{
     parede = 0,
@@ -83,7 +83,9 @@ char ch;
 int value = 0;
 bool stop_flag = false;
 bool turn_flag = false;
-bool fim_flag = true;
+bool fim_flag = false;
+bool read_angle = false;
+bool fim = false;
 
 float angle_mag;
 
@@ -91,6 +93,16 @@ double dis;
 double dis_right = 1;
 double dis_left = 1;
 double dis_front = 1;
+
+float rate_gyr_x;
+float rate_gyr_y;
+float rate_gyr_z;
+
+float gyr_x=0;
+float gyr_y=0;
+float gyr_z=0;
+
+float offset_z=0;
 
 double angle_base = 0;
 
@@ -162,15 +174,15 @@ void go_reverse_left(float speed)
     {
         speed = max_speed;
     }
-    motorR.setDutyPercent(100 - speed);
+    motorL.setDutyPercent(100 - speed);
     IN3.setValue(high);
     IN4.setValue(low);
 }
 
 void stop_motor()
 {
-    motorR.setDutyPercent(100);
-    motorR.setDutyPercent(100);
+    motorR.setDutyPercent(0);
+    motorR.setDutyPercent(0);
     IN1.setValue(low);
     IN2.setValue(low);
     IN3.setValue(low);
@@ -339,35 +351,45 @@ public:
         BlackGPIO echo3(GPIO_67, input, SecureMode);
 
         // Magnetometro.
-        uint8_t read_buffer[13] = {0};
-        uint8_t register_value = 0x00; // Primeiro registrador.
+        uint8_t read_buffer[6] = {0};
+        uint8_t register_value = 0x03; // Primeiro registrador.
         uint8_t readBlockSize;
 
         float x_mag = 0;
         float z_mag = 0;
         float y_mag = 0;
-
+		float tempo;
+        
+        BlackI2C  gyro(I2C_2, 0x6B);
+		gyro.open( ReadWrite);
+		bool resultOfWrite          = gyro.writeByte(0x20, 0x6F);
+		std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
+		resultOfWrite          = gyro.writeByte(0x23, 0x40);
+		std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
+		/*
         // Inicia comunicacao I2C com magnetometro (endereco 0x1E).
-        BlackI2C myI2c(I2C_2, 0x1E);
+        BlackI2C mag(I2C_2, 0x1E);
 
-        myI2c.open(ReadWrite);
+        mag.open(ReadWrite);
 
         // Configuracao sensor.
-        bool resultOfWrite = myI2c.writeByte(0x00, 0x70);
+        resultOfWrite = mag.writeByte(0x00, 0x0C);
         cout << "new value is wrote?: " << boolalpha << resultOfWrite << dec << endl;
 
         // Configuracao sensor.
-        resultOfWrite = myI2c.writeByte(0x01, 0xA0);
+        resultOfWrite = mag.writeByte(0x01, 0x20);
         cout << "new value is wrote?: " << boolalpha << resultOfWrite << dec << endl;
 
         // Configuracao modo (leitura continua).
-        resultOfWrite = myI2c.writeByte(0x02, 0x00);
+        resultOfWrite = mag.writeByte(0x02, 0x00);
         cout << "new value is wrote?: " << boolalpha << resultOfWrite << dec << endl;
-
+		*/
         int count = 0; // Counter for alternating shifts.
         short value2 = 0;
+        chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
+        chrono::high_resolution_clock::time_point t0 = chrono::high_resolution_clock::now();
 
-        while (!button.isHigh())
+        while (!button.isHigh() && fim == false)
         {
 
             // US 1.
@@ -386,7 +408,7 @@ public:
             receive_pulse_ultrasound(pin1_path);
             dis_front = dis * 100;
 
-            cout << dis << " cm (1)" << endl;
+            //cout << dis*100 << " cm (1)" << endl;
             //cout << value << endl;
 
             // US 2.
@@ -404,7 +426,7 @@ public:
             // Espera ECHO.
             receive_pulse_ultrasound(pin2_path);
             dis_right = dis * 100;
-            cout << dis << " cm (2)" << endl;
+            //cout << dis*100 << " cm (2)" << endl;
             //cout << value << endl;
 
             // US 3.
@@ -422,58 +444,104 @@ public:
             // Espera ECHO.
             receive_pulse_ultrasound(pin3_path);
             dis_left = dis * 100;
-            cout << dis << " cm (3)" << endl;
+            //cout << dis*100 << " cm (3)" << endl;
             //cout << value << endl;
-
+            /*
             // Leitura do magnetometro.
-            readBlockSize = myI2c.readBlock(register_value, read_buffer, sizeof(read_buffer));
+            readBlockSize = mag.readBlock(register_value, read_buffer, sizeof(read_buffer));
             //cout << "Total read block size: " << (int)readBlockSize << endl;
 
             // Checa se todos os bytes foram lidos.
-            if (readBlockSize != 13)
+            if (readBlockSize != 6)
             {
                 cout << "erro_read_I2C" << endl;
             }
             else
             {
-                // Registradores 0x03 a 0x09.
-                for (int j = 3; j < 9; j++)
-                {
-                    value2 = value2 | read_buffer[j]; // OR read_buffer into lower byte.
+            	//printf("Looks like the I2C bus is operational! \n");
+				for (int j=0; j<6; j++) {
+					value2 = value2 | read_buffer[j];	//OR read_buffer into lower byte
+					if (count%2 == 0)	//Shift 8 bits every other loop
+						value2 = value2 << 8;
+					else {
+						if (j == 1)
+							x_mag = (float)value2/1100 - 0.09;
+						if (j == 3)
+							z_mag = (float)value2/980 ;
+						if (j == 5)
+							y_mag =  (float)value2/1100 + 0.04;
+						value2 = 0;
+					}//end if
+					count++;
+				}// end for
 
-                    // LSB nos registradores pares.
-                    if (count % 2 == 0)
-                    {
-                        value2 = value2 << 8; // Shift 8 bits every other loop.
-                    }
-                    else
-                    {
-                        cout << value2 << "	";
-                        // Le 3 direcoes em sequencia.
-                        if (count == 1)
-                        {
-                            x_mag = value2;
-                        }
-                        else if (count == 3)
-                        {
-                            z_mag = value2;
-                        }
-                        else
-                        {
-                            y_mag = value2;
-                        }
-                        value2 = 0;
-                    }
-                    count++;
-                }
-                count = 0;
+				count = 0;
+            	//x_mag = (float)(read_buffer[0] << 8 | read_buffer[1]);
+				//y_mag = (float)(read_buffer[4] << 8 | read_buffer[5]);
+				//z_mag = (float)(read_buffer[2] << 8 | read_buffer[3]);
+				//x_mag = x_mag/1100 - 0.09;
+				//y_mag = y_mag/1100 + 0.04;
             }
-            cout << endl;
+            //cout << endl;
             //usleep(DELAY); //500 ms
-            angle_mag = atan2(x_mag, y_mag) / M_PI * 180 - angle_base;
-            cout << "angle" << angle_mag << "degres" << endl;
+            angle_mag = atan2(y_mag, x_mag) / M_PI * 180 - angle_base;
+            // Transformacao para intervalo -180 180
+            if (angle_mag > 180){
+            	angle_mag -= 360;
+            }
+            if (angle_mag < -180)
+            {
+            	angle_mag += 360;
+            }
+            //cout << "x_mag " << x_mag << "degres" << endl;
+            //cout << "y_mag " << y_mag << "degres" << endl;
+            //cout << "angle " << angle_mag << "degres" << endl;
+			*/
+            readBlockSize       = gyro.readBlock(0x28 | 0x80, read_buffer, sizeof(read_buffer) );
+			//std::cout << "Total read block size: " << (int)readBlockSize << std::endl;
+			if (readBlockSize!=6){
+				cout << "erro" << endl;
+			}
+			else {
+				//printf("Looks like the I2C bus is operational! \n");
+				for (int j=0; j<6; j++) {
+					value2 = value2 | read_buffer[j];	//OR read_buffer into lower byte
+					if (count%2 == 0)	//Shift 8 bits every other loop
+						value2 = value2 << 8;
+					else {
+						//if (j == 1)
+							//rate_gyr_x = value2 * 0.00875;
+						//if (j == 3)
+							//rate_gyr_y = value2* 0.00875;
+						if (j == 5)
+							rate_gyr_z =  value2 * 0.00875 - offset_z;
+						value2 = 0;
+					}//end if
+					count++;
+				}// end for
 
-            usleep(100000);
+				count = 0;
+			}//end else
+			t1 = chrono::high_resolution_clock::now();
+			tempo = chrono::duration_cast<chrono::duration<double>>(t1 - t0).count();
+			t0 = t1;
+			//cout << "rate_z " << rate_gyr_z << endl;
+			//cout << "tempo " << tempo << endl;
+			if (read_angle == true){
+				gyr_z += rate_gyr_z * tempo;
+				 if (gyr_z> 180)
+				{
+					 gyr_z -= 360;
+				}
+
+				if (gyr_z < -180)
+				{
+					gyr_z += 360;
+				}
+				//cout << "gyr_z = " << gyr_z << endl;
+			}
+
+            usleep(10*1000);
             i++;
         }
     }
@@ -488,39 +556,42 @@ int change_function(int function)
 {
     if (function == segueNorte)
     {
-        return leste;
+        return giraLeste;
     }
-    if (function == giraSul)
+    /*
+    if (function == giraSul && fim_flag)
     {
     	return fimSul;
     }
-    if (function == giraNorte)
+    if (function == giraNorte && fim_flag)
     {
     	return fimNorte;
     }
+    */
     return (function + 1);
 }
 
 // Rotacao de 90 graus.
-float turn_90(mode m)
+float turn_90(mode m, int *count)
 {
-    float adjust = 0.5 * max_speed;
+    float adjust = 0.8* max_speed;
     float angle_ref;
+    float Kp = 2; //2
     stop_flag = true;
 
     switch (m)
     {
     case leste:
-        angle_ref = -90 - angle_mag;
+        angle_ref = 90 - gyr_z;
         break;
     case oeste:
-        angle_ref = 90 - angle_mag;
+        angle_ref = -90 - gyr_z;
         break;
     case sul:
-        angle_ref = 180 - angle_mag;
+        angle_ref = 180 - gyr_z;
         break;
     case norte:
-        angle_ref = 0 - angle_mag;
+        angle_ref = 0 - gyr_z;
         break;
     }
 
@@ -534,25 +605,49 @@ float turn_90(mode m)
         angle_ref += 360;
     }
 
-    if (angle_ref < 30 && angle_ref > -30)
-    {
-        adjust *= 0.8;
+    adjust = Kp * angle_ref;
+
+    if (adjust > 0 && adjust < 0.6* max_speed){
+    	adjust = 0.6* max_speed;
+    }
+    if (adjust < 0 && adjust > -0.6*max_speed){
+       	adjust = -0.6* max_speed;
     }
 
-    if (angle_ref < 2 && angle_ref > -2)
+    /*
+    if (angle_ref < 15 && angle_ref > -15)
     {
-        adjust = 0;
-        turn_flag = false;
+        adjust *= 0.9;
     }
-
+	*/
+    if (angle_ref < 3.0 && angle_ref > -3.0)
+    {
+    	*count += 1;
+    	cout << "count = " << *count << endl;
+    	if (*count==5){
+    		adjust = 0;
+    		turn_flag = false;
+    	}
+    }
+    if (angle_ref > 3.0 || angle_ref < -3.0)
+	{
+    	cout << "angle_ref " << angle_ref << endl;
+    	*count -= 1;
+    	if (*count<0){
+    		*count = 0;
+    	}
+	}
+    return -adjust;
+    /*
     if (angle_ref > 0)
-    {
-        return adjust;
-    }
-    else
     {
         return -adjust;
     }
+    else
+    {
+        return adjust;
+    }
+    */
 }
 
 // Segue em caminho reto.
@@ -560,35 +655,46 @@ float follow_direction(mode dir, float *error_i)
 {
     float adjust = 0;
     float angle_ref;
-    float Kp = 3;
-    float Ki = 0.1;
-    float dis_time = 2;
+    float Kp = 2; //2
+    float Ki = 0.01; //0.01
+    float dis_time = 1.5;
     //float Kd = 0;
     turn_flag = false;
     // Angulo inicial do movimento tomado como referencia. Setpoint do controle e o angulo zero, entao angle_ref e o proprio erro nas iteracoes seguintes.
     switch (dir)
     {
     case leste:
-        angle_ref = -90 - angle_mag;
+        angle_ref = gyr_z - 90;
         break;
     case oeste:
-        angle_ref = 90 - angle_mag;
+        angle_ref = gyr_z + 90;
         break;
     case sul:
-        angle_ref = 180 - angle_mag;
+        angle_ref = gyr_z - 180;
         break;
     case norte:
-        angle_ref = 0 - angle_mag;
+        angle_ref = gyr_z - 0;
         break;
     }
+
+    if (angle_ref > 180)
+	{
+		angle_ref -= 360;
+	}
+
+	if (angle_ref < -180)
+	{
+		angle_ref += 360;
+	}
 
     *error_i += angle_ref;
 
     stop_dis = chrono::high_resolution_clock::now();
     elapsed2 = stop_dis - start_dis;
 
-    if (elapsed2.count() > dis_time && dir % 2 == 0)
+    if (elapsed2.count() > dis_time && dir < 2)
     {
+    	cout << "distancia chegou "  << endl;
         stop_flag = true;
         return 0;
     }
@@ -599,9 +705,9 @@ float follow_direction(mode dir, float *error_i)
 
 float follow_wall(float *error_i, float *angle_soma, int *count, ladoParede lado){
 	float adjust = 0;
-	float dis_ref=10;
-	float Kp = 7;
-	float Ki = 0.2;
+	float dis_ref=20;
+	float Kp = 6;
+	float Ki = 0.01;
 	*angle_soma += angle_mag;
 	*count += 1;
 	if (lado == esquerda){
@@ -610,35 +716,75 @@ float follow_wall(float *error_i, float *angle_soma, int *count, ladoParede lado
 	else{
 		dis_ref = dis_ref - dis_right;
 	}
+	*error_i += dis_ref;
 	adjust = Kp * dis_ref + Ki * (*error_i);
 	return -adjust;
 }
 
+void calcule_offset(){
+	int i=0;
+	float soma_z=0;
+	while(i<500){
+		soma_z += rate_gyr_z;
+		usleep(1*1000);
+		i++;
+	}
+	offset_z += soma_z/i;
+}
+
 int main()
 {
+	ofstream myfile;
     int i = 0;
     float speed_right = 0;
     float speed_left = 0;
     float adjustment = 0;
-    int function = parede;
-    float dis_stop = 20;
-    float dis_slow = 60;
+    int function = segueNorte;
+    float dis_stop = 10;
+    float dis_slow = 20;
     float error_i = 0;
     float angle_soma=0;
     int count=0;
+    int false_stop = 0;
     ladoParede lado = esquerda;
-
+    usleep(1000 * 1000);
     Task1 *t1 = new Task1();
+    cout << "Waiting..." << endl;
+    while (button.isHigh()){}
+    cout << "Start" << endl;
+
 
     setup_PWM();
     setup_GPIO();
     t1->run();
 
+    sleep(2);
+    calcule_offset();
+    calcule_offset();
+    calcule_offset();
+
+    angle_base = angle_mag;
+    read_angle = true;
+
     turn_on_pwm();
+    myfile.open ("Dados.txt");
+    myfile << "tempo" << "\t" << "dis_front" << "\t" << "angle_mag" << "\t"  << "gyr_z" << "\t" << "funcao" << endl;
+    chrono::high_resolution_clock::time_point t2 = chrono::high_resolution_clock::now();
+    chrono::high_resolution_clock::time_point t3 = chrono::high_resolution_clock::now();
     while (!button.isHigh())
     {
+    	cout << dis_front << " cm (front)" << endl;
+    	cout << dis_right << " cm (right)" << endl;
+    	cout << dis_left << " cm (left)" << endl;
+    	cout << "angle_ref = " << angle_base << "degres" << endl;
+    	cout << "angle_mag = " << angle_mag << "degres" << endl;
+    	cout << "gyr_z = " << gyr_z << endl;
+    	t3 = chrono::high_resolution_clock::now();
+    	myfile << chrono::duration_cast<chrono::duration<double>>(t3 - t2).count() << "\t" << dis_front << "\t" << angle_mag << "\t" << gyr_z << "\t" << function << endl;
+    	//function = segueNorte;
         if (function == parede)
         {
+        	cout << "parede" << endl;
             adjustment = follow_wall(&error_i, &angle_soma, &count, lado);
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
@@ -646,15 +792,17 @@ int main()
 
         if (function == giraLeste)
         {
-            adjustment = turn_90(leste);
+        	cout << "giraL" << endl;
+            adjustment = turn_90(leste, &i);
             // Giro em torno do centro.
             // Alinhamento com giraleste.
             speed_left = -adjustment;
-            speed_right = adjustment;
+            speed_right = +adjustment;
         }
 
         if (function == stepLeste)
         {
+        	cout << "stepL" << endl;
             adjustment = follow_direction(leste, &error_i);
             // Passo ate proxima linha de limpeza.
             speed_left = constant_speed - adjustment;
@@ -663,14 +811,16 @@ int main()
 
         if (function == giraSul)
         {
-            adjustment = turn_90(sul);
+        	cout << "giraS" << endl;
+            adjustment = turn_90(sul, &i);
             // Alinhamento com sul.
             speed_left = -adjustment;
-            speed_right = adjustment;
+            speed_right = +adjustment;
         }
 
         if (function == segueSul)
         {
+        	cout << "segueSul" << endl;
             adjustment = follow_direction(sul, &error_i);
             // Segue sul ate encontrar parede.
             speed_left = constant_speed - adjustment;
@@ -679,14 +829,16 @@ int main()
 
         if (function == giraOeste)
         {
-            adjustment = turn_90(leste);
+        	cout << "giraO" << endl;
+            adjustment = turn_90(leste, &i);
             // Alinhamento com oeste.
             speed_left = -adjustment;
-            speed_right = adjustment;
+            speed_right = +adjustment;
         }
 
         if (function == stepOeste)
         {
+        	cout << "step0" << endl;
             adjustment = follow_direction(leste, &error_i);
             // Passo ate proxima linha de limpeza.
             speed_left = constant_speed - adjustment;
@@ -695,7 +847,8 @@ int main()
 
         if (function == giraNorte)
         {
-            adjustment = turn_90(norte);
+        	cout << "giraN" << endl;
+            adjustment = turn_90(norte, &i);
             // Alinhamento com norte (volta para estado inicial).
             speed_left = -adjustment;
             speed_right = adjustment;
@@ -703,14 +856,16 @@ int main()
 
         if (function == segueNorte)
         {
+        	cout << "segueN" << endl;
             adjustment = follow_direction(norte, &error_i);
             // Segue norte ate encontrar parede.
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
         }
-
+        /*
         if (function == fimSul)
         {
+        	cout << "fimS" << endl;
             // Funcao final.
         	adjustment = follow_wall(&error_i, &angle_soma, &count, lado);
 			speed_left = constant_speed - adjustment;
@@ -719,6 +874,7 @@ int main()
 
         if (function == fimNorte)
 		{
+        	cout << "fimN" << endl;
 			// Funcao final.
         	if (lado == esquerda)
         		adjustment = follow_wall(&error_i, &angle_soma, &count, direita);
@@ -728,23 +884,39 @@ int main()
 			speed_right = constant_speed + adjustment;
 
 		}
-
+		*/
+        cout <<  "sTOP_FLAG = " << stop_flag  << endl;
+        cout <<  "tURN_FLAG = " << turn_flag  << endl;
+        //stop_flag = false;
         if (dis_front < dis_stop && stop_flag == false)
         {
-            stop_flag = true;
+        	false_stop++;
+        	if (false_stop==5){
+        		 stop_flag = true;
+        		 if (function == parede){
+					angle_base = angle_soma/count;
+				 }
+				 if (function == stepLeste || function == stepOeste){
+					 if (fim_flag==true){
+						 break;
+					 }
+					 fim_flag = true;
+				 }
+				 /*
+				 if (function == fimSul || function == fimNorte){
+					break;
+				 }
+				 */
+        	}
+            //stop_flag = true;
+            cout << "stop" << endl;
             stop_motor();
-            if (function == parede){
-            	angle_base = angle_soma/count;
-            }
-            if (function == stepLeste || function == stepOeste){
-                fim_flag = true;
-            }
-            if (function == fimSul || function == fimNorte){
-            	break;
-            }
         }
         else
         {
+        	cout << "velocidade esquerdo = " << speed_left << endl;
+        	cout << "velocidade direito = " << speed_right << endl;
+        	false_stop = 0;
             if (dis_front < dis_slow)
             {
                 speed_right = speed_right * 0.8;
@@ -760,30 +932,39 @@ int main()
             }
             if (speed_left > 0)
             {
-                go_straight_left(speed_right);
+                go_straight_left(speed_left);
             }
             else
             {
-                go_reverse_left(-speed_right);
+                go_reverse_left(-speed_left);
             }
         }
+
         if (stop_flag == true && turn_flag == false)
         {
+        	cout << "muda de funcao" << endl;
             stop_motor();
+            usleep(200 * 1000);
+            calcule_offset();
             function = change_function(function);
             error_i = 0;
             start_dis = chrono::high_resolution_clock::now();
-            turn_flag = false;
-            stop_flag = true;
+            turn_flag = true;
+            stop_flag = false;
+            i = 0;
         }
+        //stop_flag = false;
         usleep(50 * 1000);
     }
     turn_off_pwm();
-
+    fim = true;
+    cout << "programa_finalizado";
     t1->stop();
 
     //if (!motorE.isRunning())
     cout << "programa_finalizado";
     //cout << "Pwm period time: " << motorE.getPeriodValue() << " nanoseconds \n";
     return 0;
+
+   	 myfile.close();
 }

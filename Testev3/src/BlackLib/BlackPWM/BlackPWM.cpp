@@ -43,10 +43,12 @@ namespace BlackLib
     {
         this->pwmPinName    = pwm;
         this->pwmCoreErrors = new errorCorePWM( this->getErrorsFromCore() );
+        this->expPath           = "/sys/class/gpio/export";
 
-        this->loadDeviceTree();
 
-        this->pwmTestPath   = "/sys/devices/" + this->getOcpName() + "/" + this->findPwmTestName( this->pwmPinName );
+        this->export_pwm(pwmName pwm);
+
+        this->pwmTestPath   = this->findPwmTestName( this->pwmPinName );
     }
 
 
@@ -56,6 +58,23 @@ namespace BlackLib
     }
 
 
+    bool 		BlackCorePWM::export_pwm(pwmName pwm){
+    	std::ofstream expFile;
+
+    	expFile.open(this->expPath.c_str(),std::ios::out);
+    	if(expFile.fail())
+    	{
+    	      expFile.close();
+    	      return false;
+    	}
+    	else
+    	{
+    	expFile << this->pinNumericName;
+
+    	      expFile.close();
+    	      return true;
+    	}
+    }
     bool        BlackCorePWM::loadDeviceTree()
     {
         std::string file    = this->getSlotsFilePath();
@@ -100,7 +119,7 @@ namespace BlackLib
         {
             case P8_13:
             {
-                searchResult = this->searchDirectoryOcp(BlackCore::PWM_P8_13);
+                searchResult =
                 break;
             }
 
