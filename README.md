@@ -1,11 +1,13 @@
-﻿# ROBÔ ASPIRADOR DE PÓ...
+# ROBÔ ASPIRADOR DE PÓ...
 
 Projeto desenvolvido para disciplina Sistemas Embarcados.
+
+![O robô](/imagens/robo.jpeg)
 
 ## ... que não aspira pó de verdade.
 Queremos simular o funcionamento de um aspirador de pó autônomo comercial: fazer uma varredura inteligente por todo o cômodo, evitando objetos e paredes.
 
-![O robô](/imagens/robo.jpeg)
+![Varredura](/imagens/funcionamento.jpg)
 
 ## Como?
 Uma IMU para localização e navegação no ambiente de trabalho e quatro sensores ultrassônicos para detecção de objetos/colisões.
