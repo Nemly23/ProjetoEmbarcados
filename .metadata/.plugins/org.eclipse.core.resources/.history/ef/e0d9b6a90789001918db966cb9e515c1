@@ -84,8 +84,6 @@ int value = 0;
 bool stop_flag = false;
 bool turn_flag = false;
 bool fim_flag = false;
-bool fim_oeste_flag = false;
-bool fim_leste_flag = false;
 bool read_angle = false;
 bool fim = false;
 
@@ -95,8 +93,6 @@ double dis;
 double dis_right = 1;
 double dis_left = 1;
 double dis_front = 1;
-double dis_right_ant = 0;
-double dis_left_ant = 0;
 
 float rate_gyr_x;
 float rate_gyr_y;
@@ -563,12 +559,6 @@ int change_function(int function)
     {
         return giraLeste;
     }
-    if (function == stepLeste && fim_oeste_flag == true){
-    	fim_oeste_flag = false;
-    }
-    if (function == stepOeste && fim_leste_flag == true){
-		fim_leste_flag = false;
-	}
     /*
     if (function == giraSul && fim_flag)
     {
@@ -618,11 +608,11 @@ float turn_90(mode m, int *count)
 
     adjust = Kp * angle_ref;
 
-    if (adjust > 0 && adjust < 0.7* max_speed){
-    	adjust = 0.7* max_speed;
+    if (adjust > 0 && adjust < 0.6* max_speed){
+    	adjust = 0.6* max_speed;
     }
-    if (adjust < 0 && adjust > -0.7*max_speed){
-       	adjust = -0.7* max_speed;
+    if (adjust < 0 && adjust > -0.6*max_speed){
+       	adjust = -0.6* max_speed;
     }
 
     /*
@@ -661,34 +651,6 @@ float turn_90(mode m, int *count)
     */
 }
 
-float follow_wall(float *error_i, ladoParede lado){
-	float adjust = 0;
-	float dis_ref=10;
-	float Kp = 3;
-	float Ki = 0;
-	if (lado == esquerda){
-		if (dis_left > 20){
-			dis_left = dis_left_ant;
-		}
-		else{
-			dis_left_ant = dis_left;
-		}
-		dis_ref = - dis_ref + dis_left_ant;
-	}
-	else{
-		if (dis_right >  20){
-			dis_right = dis_right_ant;
-		}
-		else{
-			dis_right_ant = dis_right;
-		}
-		dis_ref = dis_ref - dis_right_ant;
-	}
-	*error_i += dis_ref;
-	adjust = Kp * dis_ref + Ki * (*error_i);
-	return adjust;
-}
-
 // Segue em caminho reto.
 float follow_direction(mode dir, float *error_i)
 {
@@ -700,46 +662,41 @@ float follow_direction(mode dir, float *error_i)
     //float Kd = 0;
     turn_flag = false;
     // Angulo inicial do movimento tomado como referencia. Setpoint do controle e o angulo zero, entao angle_ref e o proprio erro nas iteracoes seguintes.
-    if (dis_left < 10 || dis_right < 10){
-		if (dis_left < 10){
-			*error_i = 0;
-			adjust = follow_wall(error_i,esquerda);
-		}
-		if (dis_right < 10){
-			*error_i = 0;
-			adjust = follow_wall(error_i,direita);
-		}
-	}
-    else{
-		switch (dir)
-		{
-		case leste:
-			angle_ref = gyr_z - 90;
-			break;
-		case oeste:
-			angle_ref = gyr_z + 90;
-			break;
-		case sul:
-			angle_ref = gyr_z - 180;
-			break;
-		case norte:
-			angle_ref = gyr_z - 0;
-			break;
-		}
-
-		if (angle_ref > 180)
-		{
-			angle_ref -= 360;
-		}
-
-		if (angle_ref < -180)
-		{
-			angle_ref += 360;
-		}
-
-		*error_i += angle_ref;
-		adjust = Kp * angle_ref + Ki * (*error_i);
+    if (dis_left < 10){
+    	*error_i = 0;
+    	adjust = follow_wall(error_i,esquerda);
     }
+    else if (dis_left < 10){
+    	*error_i = 0;
+    	adjust = follow_wall(error_i,esquerda);
+    }
+    switch (dir)
+    {
+    case leste:
+        angle_ref = gyr_z - 90;
+        break;
+    case oeste:
+        angle_ref = gyr_z + 90;
+        break;
+    case sul:
+        angle_ref = gyr_z - 180;
+        break;
+    case norte:
+        angle_ref = gyr_z - 0;
+        break;
+    }
+
+    if (angle_ref > 180)
+	{
+		angle_ref -= 360;
+	}
+
+	if (angle_ref < -180)
+	{
+		angle_ref += 360;
+	}
+
+    *error_i += angle_ref;
 
     stop_dis = chrono::high_resolution_clock::now();
     elapsed2 = stop_dis - start_dis;
@@ -751,8 +708,24 @@ float follow_direction(mode dir, float *error_i)
         return 0;
     }
 
-
+    adjust = Kp * angle_ref + Ki * (*error_i);
     return adjust;
+}
+
+float follow_wall(float *error_i, ladoParede lado){
+	float adjust = 0;
+	float dis_ref=20;
+	float Kp = 4;
+	float Ki = 0.01;
+	if (lado == esquerda){
+		dis_ref = dis_ref - dis_left;
+	}
+	else{
+		dis_ref = dis_ref - dis_right;
+	}
+	*error_i += dis_ref;
+	adjust = Kp * dis_ref + Ki * (*error_i);
+	return -adjust;
 }
 
 void calcule_offset(){
@@ -775,15 +748,13 @@ int main()
     float adjustment = 0;
     int function = parede;
     float dis_stop = 10;
-    float dis_slow = 15;
+    float dis_slow = 20;
     float error_i = 0;
     float angle_soma=0;
     int count=0;
-    int count_left=0;
-    int count_right=0;
     int false_stop = 0;
     ladoParede lado = esquerda;
-    sleep(2);
+    usleep(1000 * 1000);
     Task1 *t1 = new Task1();
     cout << "Waiting..." << endl;
     while (button.isHigh()){}
@@ -799,39 +770,23 @@ int main()
     calcule_offset();
     calcule_offset();
 
-    while (count<10){
-    	if (dis_left < 15){
-    		count_left++;
-    	}
-    	if (dis_right < 15){
-			count_right++;
-		}
-    	count++;
-    	usleep(30 * 1000);
-    }
-    count=0;
-
-    if (count_left > 5){
+    if (dis_left < 15){
     	lado = esquerda;
-    	function = segueNorte;
+    }
+    else if (dis_right < 15){
+    	lado = direita
     }
     else{
-		function = segueNorte;
-	}
-    if (count_right > 5){
-    	lado = direita;
-    	gyr_z -=180;
-    	function = segueSul;
+    	function = segueNorte
     }
-    else{
-    	function = segueNorte;
-    }
+
+
     //angle_base = angle_mag;
     read_angle = true;
 
     turn_on_pwm();
     myfile.open ("Dados.txt");
-    myfile << "tempo" << "\t" << "dis_front" << "\t" << "angle_mag" << "\t"  << "gyr_z" << "\t" << "dis_left" << "\t" << "dis_right" << "\t" << "funcao" << endl;
+    myfile << "tempo" << "\t" << "dis_front" << "\t" << "angle_mag" << "\t"  << "gyr_z" << "\t" << "funcao" << endl;
     chrono::high_resolution_clock::time_point t2 = chrono::high_resolution_clock::now();
     chrono::high_resolution_clock::time_point t3 = chrono::high_resolution_clock::now();
     while (!button.isHigh())
@@ -843,7 +798,7 @@ int main()
     	cout << "angle_mag = " << angle_mag << "degres" << endl;
     	cout << "gyr_z = " << gyr_z << endl;
     	t3 = chrono::high_resolution_clock::now();
-    	myfile << chrono::duration_cast<chrono::duration<double>>(t3 - t2).count() << "\t" << dis_front << "\t" << angle_mag << "\t" << gyr_z << "\t" << dis_left << "\t" << dis_right << "\t" << function << endl;
+    	myfile << chrono::duration_cast<chrono::duration<double>>(t3 - t2).count() << "\t" << dis_front << "\t" << angle_mag << "\t" << gyr_z << "\t" << function << endl;
     	//function = segueNorte;
         if (function == parede)
         {
@@ -956,8 +911,6 @@ int main()
         if (dis_front < dis_stop && stop_flag == false)
         {
         	false_stop++;
-        	stop_motor();
-        	cout << "stop" << endl;
         	if (false_stop==5){
         		 stop_flag = true;
         		 if (function == parede){
@@ -966,31 +919,11 @@ int main()
 						gyr_z -=180;
 					}
 				 }
-				 if (function == stepLeste){
-					 if (fim_oeste_flag == true){
-						 gyr_z = gyr_z - 90;
-						 fim_oeste_flag = false;
-						 if (fim_flag==true){
-							 break;
-						 }
-						 fim_flag = true;
+				 if (function == stepLeste || function == stepOeste){
+					 if (fim_flag==true){
+						 break;
 					 }
-					 else{
-						 fim_leste_flag = true;
-					 }
-				 }
-				 if (function == stepOeste){
-					 if (fim_leste_flag == true){
-						 gyr_z = gyr_z + 90;
-						 fim_leste_flag = false;
-						 if (fim_flag==true){
-							 break;
-						 }
-						 fim_flag = true;
-					 }
-					 else{
-						 fim_oeste_flag = true;
-					 }
+					 fim_flag = true;
 				 }
 				 /*
 				 if (function == fimSul || function == fimNorte){
@@ -999,6 +932,8 @@ int main()
 				 */
         	}
             //stop_flag = true;
+            cout << "stop" << endl;
+            stop_motor();
         }
         else
         {

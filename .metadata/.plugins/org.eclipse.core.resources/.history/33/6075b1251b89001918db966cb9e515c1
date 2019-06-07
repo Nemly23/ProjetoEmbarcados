@@ -95,8 +95,6 @@ double dis;
 double dis_right = 1;
 double dis_left = 1;
 double dis_front = 1;
-double dis_right_ant = 0;
-double dis_left_ant = 0;
 
 float rate_gyr_x;
 float rate_gyr_y;
@@ -664,25 +662,13 @@ float turn_90(mode m, int *count)
 float follow_wall(float *error_i, ladoParede lado){
 	float adjust = 0;
 	float dis_ref=10;
-	float Kp = 3;
+	float Kp = 6;
 	float Ki = 0;
 	if (lado == esquerda){
-		if (dis_left > 20){
-			dis_left = dis_left_ant;
-		}
-		else{
-			dis_left_ant = dis_left;
-		}
-		dis_ref = - dis_ref + dis_left_ant;
+		dis_ref = - dis_ref + dis_left;
 	}
 	else{
-		if (dis_right >  20){
-			dis_right = dis_right_ant;
-		}
-		else{
-			dis_right_ant = dis_right;
-		}
-		dis_ref = dis_ref - dis_right_ant;
+		dis_ref = dis_ref - dis_right;
 	}
 	*error_i += dis_ref;
 	adjust = Kp * dis_ref + Ki * (*error_i);
@@ -700,16 +686,14 @@ float follow_direction(mode dir, float *error_i)
     //float Kd = 0;
     turn_flag = false;
     // Angulo inicial do movimento tomado como referencia. Setpoint do controle e o angulo zero, entao angle_ref e o proprio erro nas iteracoes seguintes.
-    if (dis_left < 10 || dis_right < 10){
-		if (dis_left < 10){
-			*error_i = 0;
-			adjust = follow_wall(error_i,esquerda);
-		}
-		if (dis_right < 10){
-			*error_i = 0;
-			adjust = follow_wall(error_i,direita);
-		}
-	}
+    if (dis_left < 10){
+    	*error_i = 0;
+    	adjust = follow_wall(error_i,esquerda);
+    }
+    else if (dis_right < 10){
+    	*error_i = 0;
+    	adjust = follow_wall(error_i,direita);
+    }
     else{
 		switch (dir)
 		{
@@ -779,8 +763,6 @@ int main()
     float error_i = 0;
     float angle_soma=0;
     int count=0;
-    int count_left=0;
-    int count_right=0;
     int false_stop = 0;
     ladoParede lado = esquerda;
     sleep(2);
@@ -799,33 +781,17 @@ int main()
     calcule_offset();
     calcule_offset();
 
-    while (count<10){
-    	if (dis_left < 15){
-    		count_left++;
-    	}
-    	if (dis_right < 15){
-			count_right++;
-		}
-    	count++;
-    	usleep(30 * 1000);
-    }
-    count=0;
-
-    if (count_left > 5){
+    if (dis_left < 15){
     	lado = esquerda;
-    	function = segueNorte;
     }
-    else{
-		function = segueNorte;
-	}
-    if (count_right > 5){
+    else if (dis_right < 15){
     	lado = direita;
-    	gyr_z -=180;
-    	function = segueSul;
     }
     else{
     	function = segueNorte;
     }
+
+
     //angle_base = angle_mag;
     read_angle = true;
 

@@ -1,24 +1,8 @@
-15:05:03 **** Incremental Build of configuration Debug for project TesteBlackLib ****
+11:04:19 **** Incremental Build of configuration Debug for project TesteBlackLib ****
 make all 
 Building file: ../src/TesteBlackLib.cpp
 Invoking: Cross G++ Compiler
 arm-linux-gnueabihf-g++ -O0 -g3 -Wall -c -fmessage-length=0 -std=c++11 -MMD -MP -MF"src/TesteBlackLib.d" -MT"src/TesteBlackLib.d" -o "src/TesteBlackLib.o" "../src/TesteBlackLib.cpp"
-../src/TesteBlackLib.cpp: In member function ‘virtual void Task1::onStartHandler()’:
-../src/TesteBlackLib.cpp:334:13: warning: unused variable ‘erro’ [-Wunused-variable]
-         int erro = 0;
-             ^
-../src/TesteBlackLib.cpp:355:17: warning: unused variable ‘register_value’ [-Wunused-variable]
-         uint8_t register_value = 0x03; // Primeiro registrador.
-                 ^
-../src/TesteBlackLib.cpp:358:15: warning: unused variable ‘x_mag’ [-Wunused-variable]
-         float x_mag = 0;
-               ^
-../src/TesteBlackLib.cpp:359:15: warning: unused variable ‘z_mag’ [-Wunused-variable]
-         float z_mag = 0;
-               ^
-../src/TesteBlackLib.cpp:360:15: warning: unused variable ‘y_mag’ [-Wunused-variable]
-         float y_mag = 0;
-               ^
 Finished building: ../src/TesteBlackLib.cpp
  
 Building target: TesteBlackLib
@@ -27,5 +11,5 @@ arm-linux-gnueabihf-g++  -o "TesteBlackLib"  ./src/BlackLib/examples/ExampleMain
 Finished building target: TesteBlackLib
  
 
-15:05:08 Build Finished (took 5s.453ms)
+11:04:21 Build Finished (took 1s.967ms)
 

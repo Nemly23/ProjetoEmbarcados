@@ -664,7 +664,7 @@ float turn_90(mode m, int *count)
 float follow_wall(float *error_i, ladoParede lado){
 	float adjust = 0;
 	float dis_ref=10;
-	float Kp = 3;
+	float Kp = 2;
 	float Ki = 0;
 	if (lado == esquerda){
 		if (dis_left > 20){
@@ -700,16 +700,14 @@ float follow_direction(mode dir, float *error_i)
     //float Kd = 0;
     turn_flag = false;
     // Angulo inicial do movimento tomado como referencia. Setpoint do controle e o angulo zero, entao angle_ref e o proprio erro nas iteracoes seguintes.
-    if (dis_left < 10 || dis_right < 10){
-		if (dis_left < 10){
-			*error_i = 0;
-			adjust = follow_wall(error_i,esquerda);
-		}
-		if (dis_right < 10){
-			*error_i = 0;
-			adjust = follow_wall(error_i,direita);
-		}
-	}
+    if (dis_left < 10){
+    	*error_i = 0;
+    	adjust = follow_wall(error_i,esquerda);
+    }
+    else if (dis_right < 10){
+    	*error_i = 0;
+    	adjust = follow_wall(error_i,direita);
+    }
     else{
 		switch (dir)
 		{
@@ -799,26 +797,21 @@ int main()
     calcule_offset();
     calcule_offset();
 
-    while (count<10){
+    while (count<20){
     	if (dis_left < 15){
     		count_left++;
     	}
     	if (dis_right < 15){
 			count_right++;
 		}
-    	count++;
-    	usleep(30 * 1000);
+    	usleep(50 * 1000);
     }
     count=0;
-
-    if (count_left > 5){
+    if (count_left < 15){
     	lado = esquerda;
     	function = segueNorte;
     }
-    else{
-		function = segueNorte;
-	}
-    if (count_right > 5){
+    else if (count_right < 15){
     	lado = direita;
     	gyr_z -=180;
     	function = segueSul;

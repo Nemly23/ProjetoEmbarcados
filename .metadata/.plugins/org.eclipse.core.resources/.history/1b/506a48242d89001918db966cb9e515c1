@@ -705,7 +705,7 @@ float follow_direction(mode dir, float *error_i)
 			*error_i = 0;
 			adjust = follow_wall(error_i,esquerda);
 		}
-		if (dis_right < 10){
+		if (dis_right < 10)
 			*error_i = 0;
 			adjust = follow_wall(error_i,direita);
 		}
