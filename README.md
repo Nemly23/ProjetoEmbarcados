@@ -15,7 +15,7 @@ Uma IMU para localização e navegação no ambiente de trabalho e quatro sensor
 ## Quem?
 
 * Amanda Malimpensa | [AmandaMK015](https://github.com/AmandaMK015)
-* Camila Quadros | []()
+* Camila Quadros | [millamsq](https://github.com/millamsq)
 * Rafael Matumoto | [rmatumoto](https://github.com/rmatumoto)
 * Ricardo Peixoto | [Nemly23](https://github.com/Nemly23)
 
