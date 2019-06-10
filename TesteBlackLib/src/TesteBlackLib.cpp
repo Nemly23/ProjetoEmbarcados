@@ -207,16 +207,6 @@ void turn_off_pwm()
     motorL.setRunState(stop);
 }
 
-/*
-void segue_10cm(){
-	go_straight_left(50);
-	go_straight_right(50);
-	turn_on_pwm();
-	calcula_distancia(10);
-	turn_off_pwm();
-}
-*/
-
 void verify_proximity(float speed)
 {
     if (dis_front < 0.30)
@@ -354,43 +344,29 @@ public:
         BlackGPIO trig3(GPIO_66, output, SecureMode);
         BlackGPIO echo3(GPIO_67, input, SecureMode);
 
-        // Magnetometro.
+        // Giroscopio.
         uint8_t read_buffer[6] = {0};
-        //uint8_t register_value = 0x03; // Primeiro registrador.
         uint8_t readBlockSize;
-
-        //float x_mag = 0;
-        //float z_mag = 0;
-       // float y_mag = 0;
-
-		float tempo;
+	
+	float tempo;
+		
+	// Inicia comunicacao I2C com giroscopio(endereco 0x1E).
         
-        BlackI2C  gyro(I2C_2, 0x6B);
-		gyro.open( ReadWrite);
-		bool resultOfWrite          = gyro.writeByte(0x20, 0x6F);
-		std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
-		resultOfWrite          = gyro.writeByte(0x23, 0x40);
-		std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
-		/*
-        // Inicia comunicacao I2C com magnetometro (endereco 0x1E).
-        BlackI2C mag(I2C_2, 0x1E);
+        BlackI2C  gyro(I2C_2, 0x6B); // Cria
+	
+	gyro.open( ReadWrite); 
+	
+	bool resultOfWrite          = gyro.writeByte(0x20, 0x6F);
+	std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
+	
+	resultOfWrite          = gyro.writeByte(0x23, 0x40);
+	std::cout << "new value is wrote?: " << std::boolalpha << resultOfWrite << std::dec << std::endl;
 
-        mag.open(ReadWrite);
+        
 
-        // Configuracao sensor.
-        resultOfWrite = mag.writeByte(0x00, 0x0C);
-        cout << "new value is wrote?: " << boolalpha << resultOfWrite << dec << endl;
-
-        // Configuracao sensor.
-        resultOfWrite = mag.writeByte(0x01, 0x20);
-        cout << "new value is wrote?: " << boolalpha << resultOfWrite << dec << endl;
-
-        // Configuracao modo (leitura continua).
-        resultOfWrite = mag.writeByte(0x02, 0x00);
-        cout << "new value is wrote?: " << boolalpha << resultOfWrite << dec << endl;
-		*/
         int count = 0; // Counter for alternating shifts.
         short value2 = 0;
+	
         chrono::high_resolution_clock::time_point t1 = chrono::high_resolution_clock::now();
         chrono::high_resolution_clock::time_point t0 = chrono::high_resolution_clock::now();
 
@@ -443,108 +419,55 @@ public:
             trig3.setValue(low);
             usleep(2);
             trig3.setValue(high);
-            //usleep(10);
+            //usleep(10); //
             trig3.setValue(low);
 
             // Espera ECHO.
             receive_pulse_ultrasound(pin3_path);
             dis_left = dis * 100;
+	    
             //cout << dis*100 << " cm (3)" << endl;
             //cout << value << endl;
-            /*
-            // Leitura do magnetometro.
-            readBlockSize = mag.readBlock(register_value, read_buffer, sizeof(read_buffer));
-            //cout << "Total read block size: " << (int)readBlockSize << endl;
-
-            // Checa se todos os bytes foram lidos.
-            if (readBlockSize != 6)
-            {
-                cout << "erro_read_I2C" << endl;
-            }
-            else
-            {
-            	//printf("Looks like the I2C bus is operational! \n");
-				for (int j=0; j<6; j++) {
-					value2 = value2 | read_buffer[j];	//OR read_buffer into lower byte
-					if (count%2 == 0)	//Shift 8 bits every other loop
-						value2 = value2 << 8;
-					else {
-						if (j == 1)
-							x_mag = (float)value2/1100 - 0.09;
-						if (j == 3)
-							z_mag = (float)value2/980 ;
-						if (j == 5)
-							y_mag =  (float)value2/1100 + 0.04;
-						value2 = 0;
-					}//end if
-					count++;
-				}// end for
-
-				count = 0;
-            	//x_mag = (float)(read_buffer[0] << 8 | read_buffer[1]);
-				//y_mag = (float)(read_buffer[4] << 8 | read_buffer[5]);
-				//z_mag = (float)(read_buffer[2] << 8 | read_buffer[3]);
-				//x_mag = x_mag/1100 - 0.09;
-				//y_mag = y_mag/1100 + 0.04;
-            }
-            //cout << endl;
-            //usleep(DELAY); //500 ms
-            angle_mag = atan2(y_mag, x_mag) / M_PI * 180 - angle_base;
-            // Transformacao para intervalo -180 180
-            if (angle_mag > 180){
-            	angle_mag -= 360;
-            }
-            if (angle_mag < -180)
-            {
-            	angle_mag += 360;
-            }
-            //cout << "x_mag " << x_mag << "degres" << endl;
-            //cout << "y_mag " << y_mag << "degres" << endl;
-            //cout << "angle " << angle_mag << "degres" << endl;
-			*/
+            
             readBlockSize       = gyro.readBlock(0x28 | 0x80, read_buffer, sizeof(read_buffer) );
-			//std::cout << "Total read block size: " << (int)readBlockSize << std::endl;
-			if (readBlockSize!=6){
-				cout << "erro" << endl;
-			}
-			else {
-				//printf("Looks like the I2C bus is operational! \n");
-				for (int j=0; j<6; j++) {
-					value2 = value2 | read_buffer[j];	//OR read_buffer into lower byte
-					if (count%2 == 0)	//Shift 8 bits every other loop
-						value2 = value2 << 8;
-					else {
-						//if (j == 1)
-							//rate_gyr_x = value2 * 0.00875;
-						//if (j == 3)
-							//rate_gyr_y = value2* 0.00875;
-						if (j == 5)
-							rate_gyr_z =  value2 * 0.00875 - offset_z;
-						value2 = 0;
-					}//end if
-					count++;
-				}// end for
+		//std::cout << "Total read block size: " << (int)readBlockSize << std::endl;
+		if (readBlockSize!=6){
+			cout << "erro" << endl;
+		}
+		else {
+			//printf("Looks like the I2C bus is operational! \n");
+			for (int j=0; j<6; j++) {
+				value2 = value2 | read_buffer[j];	//OR read_buffer into lower byte
+				if (count%2 == 0)	//Shift 8 bits every other loop
+					value2 = value2 << 8;
+				else {
+					if (j == 5)
+						rate_gyr_z =  value2 * 0.00875 - offset_z;
+					value2 = 0;
+				}//end if
+				count++;
+			}// end for
 
-				count = 0;
-			}//end else
-			t1 = chrono::high_resolution_clock::now();
-			tempo = chrono::duration_cast<chrono::duration<double>>(t1 - t0).count();
-			t0 = t1;
-			//cout << "rate_z " << rate_gyr_z << endl;
-			//cout << "tempo " << tempo << endl;
-			if (read_angle == true){
-				gyr_z += rate_gyr_z * tempo;
-				 if (gyr_z> 180)
-				{
-					 gyr_z -= 360;
-				}
-
-				if (gyr_z < -180)
-				{
-					gyr_z += 360;
-				}
-				//cout << "gyr_z = " << gyr_z << endl;
+			count = 0;
+		}//end else
+		t1 = chrono::high_resolution_clock::now(); //
+		tempo = chrono::duration_cast<chrono::duration<double>>(t1 - t0).count();
+		t0 = t1;
+		//cout << "rate_z " << rate_gyr_z << endl;
+		//cout << "tempo " << tempo << endl;
+		if (read_angle == true){
+			gyr_z += rate_gyr_z * tempo;
+			 if (gyr_z> 180)
+			{
+				 gyr_z -= 360;
 			}
+
+			if (gyr_z < -180)
+			{
+				gyr_z += 360;
+			}
+			//cout << "gyr_z = " << gyr_z << endl;
+		}
 
             usleep(10*1000);
             i++;
@@ -569,16 +492,7 @@ int change_function(int function)
     if (function == stepOeste && fim_leste_flag == true){
 		fim_leste_flag = false;
 	}
-    /*
-    if (function == giraSul && fim_flag)
-    {
-    	return fimSul;
-    }
-    if (function == giraNorte && fim_flag)
-    {
-    	return fimNorte;
-    }
-    */
+
     return (function + 1);
 }
 
@@ -649,16 +563,6 @@ float turn_90(mode m, int *count)
     	}
 	}
     return -adjust;
-    /*
-    if (angle_ref > 0)
-    {
-        return -adjust;
-    }
-    else
-    {
-        return adjust;
-    }
-    */
 }
 
 float follow_wall(float *error_i, ladoParede lado){
@@ -697,7 +601,6 @@ float follow_direction(mode dir, float *error_i)
     float Kp = 2; //2
     float Ki = 0.01; //0.01
     float dis_time = 1.5;
-    //float Kd = 0;
     turn_flag = false;
     // Angulo inicial do movimento tomado como referencia. Setpoint do controle e o angulo zero, entao angle_ref e o proprio erro nas iteracoes seguintes.
     if (dis_left < 10 || dis_right < 10){
@@ -826,7 +729,6 @@ int main()
     else{
     	function = segueNorte;
     }
-    //angle_base = angle_mag;
     read_angle = true;
 
     turn_on_pwm();
@@ -844,7 +746,6 @@ int main()
     	cout << "gyr_z = " << gyr_z << endl;
     	t3 = chrono::high_resolution_clock::now();
     	myfile << chrono::duration_cast<chrono::duration<double>>(t3 - t2).count() << "\t" << dis_front << "\t" << angle_mag << "\t" << gyr_z << "\t" << dis_left << "\t" << dis_right << "\t" << function << endl;
-    	//function = segueNorte;
         if (function == parede)
         {
         	cout << "parede" << endl;
@@ -927,29 +828,7 @@ int main()
             speed_left = constant_speed - adjustment;
             speed_right = constant_speed + adjustment;
         }
-        /*
-        if (function == fimSul)
-        {
-        	cout << "fimS" << endl;
-            // Funcao final.
-        	adjustment = follow_wall(&error_i, &angle_soma, &count, lado);
-			speed_left = constant_speed - adjustment;
-			speed_right = constant_speed + adjustment;
-        }
-
-        if (function == fimNorte)
-		{
-        	cout << "fimN" << endl;
-			// Funcao final.
-        	if (lado == esquerda)
-        		adjustment = follow_wall(&error_i, &angle_soma, &count, direita);
-        	else
-        		adjustment = follow_wall(&error_i, &angle_soma, &count, esquerda);
-			speed_left = constant_speed - adjustment;
-			speed_right = constant_speed + adjustment;
-
-		}
-		*/
+        
         cout <<  "sTOP_FLAG = " << stop_flag  << endl;
         cout <<  "tURN_FLAG = " << turn_flag  << endl;
         //stop_flag = false;
@@ -992,13 +871,7 @@ int main()
 						 fim_oeste_flag = true;
 					 }
 				 }
-				 /*
-				 if (function == fimSul || function == fimNorte){
-					break;
-				 }
-				 */
         	}
-            //stop_flag = true;
         }
         else
         {
@@ -1044,18 +917,13 @@ int main()
             stop_flag = false;
             i = 0;
         }
-        //stop_flag = false;
         usleep(50 * 1000);
     }
     turn_off_pwm();
     fim = true;
-    cout << "programa_finalizado";
     t1->stop();
 
-    //if (!motorE.isRunning())
-    cout << "programa_finalizado";
-    //cout << "Pwm period time: " << motorE.getPeriodValue() << " nanoseconds \n";
-    return 0;
-
-   	 myfile.close();
+    cout << "programa_finalizado" << endl;
+    myfile.close();
+    return 0;	 
 }
