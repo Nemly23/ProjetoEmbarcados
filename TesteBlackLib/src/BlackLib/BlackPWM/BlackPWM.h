@@ -52,7 +52,7 @@ namespace BlackLib
                                 P9_14                   = 3,
                                 P9_21                   = 4,
                                 P9_22                   = 5,
-								P9_42					=6,
+
 
                                 EHRPWM2B                = P8_13,
                                 EHRPWM2A                = P8_19,
@@ -60,8 +60,7 @@ namespace BlackLib
                                 EHRPWM1B                = P9_16,
                                 EHRPWM0B                = P9_21,
                                 EHRPWM0A                = P9_22,
-								ECAP0					= P9_42,
-								PWMDISABLE              = 100
+				PWMDISABLE              = 100
                             };
 
     /*!
@@ -100,16 +99,34 @@ namespace BlackLib
             errorCorePWM    *pwmCoreErrors;             /*!< @brief is used to hold the errors of BlackCorePWM class */
             std::string     pwmTestPath;                /*!< @brief is used to hold the pwm_test (pwm device driver) path */
             pwmName         pwmPinName;                 /*!< @brief is used to hold the selected pwm @b pin name */
-            std::string     expPath;
-            std::string     unExpPath;
-            std::string     modePath;
+            std::string     expPath;			/*!< @brief is used to hold the @a export file path */
+            std::string     unExpPath;			/*!< @brief is used to hold the @a unexport file path */
+            std::string     modePath;			/*!< @brief is used to hold the @a mode file path */
 
+	    /*! @brief Get export file path for specific pin.
+            *
+            *  @return Pwm export file path name variable.
+            */
             std::string    	getexportpath(pwmName pwm);
 
+	    /*! @brief Get mode file path for specific pin.
+            *
+            *  @return Pwm mode file path name variable.
+            */
             std::string    	getmodepath(pwmName pwm);
-
+	
+	    /*! @brief Exports pin and set pin mode.
+            *
+            *  This function exports pin and set the pin mode to PWM. This step is necessary.
+            *  @return True if exporting is successful, else false.
+            */
             bool            exportPWM();
 
+	    /*! @brief Unexports pin to release it and set pin mode.
+            *
+            *  This function is reverse of pin exporting and set the pin mode back to default . But this step is not necessary.
+            *  @return True if unexporting is successful, else false.
+            */
             bool        	unexportPWM();
 
             /*! @brief Loads PWM overlays to device tree.
