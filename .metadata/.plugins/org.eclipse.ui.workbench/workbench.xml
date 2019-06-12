@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<<<<<<< HEAD
 <workbench progressCount="34" version="2.0">
+=======
+<workbench progressCount="20" version="2.0">
+>>>>>>> Final
 <workbenchAdvisor/>
 <window height="771" maximized="true" width="1018" x="65" y="24">
 <fastViewData fastViewLocation="1024"/>
@@ -34,9 +38,15 @@
 </folder>
 </info>
 </editorArea>
+<<<<<<< HEAD
 <editor activePart="true" focus="true" id="org.eclipse.ptp.rdt.ui.editor.CEditor" name="BlackThread.h" partName="BlackThread.h" path="/home/ricardo/Documents/ProjetoEmbarcados/TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h" title="BlackThread.h" tooltip="TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h"/>
 <editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="35848" selectionTopPixel="0"/>
+=======
+<editor activePart="true" focus="true" id="org.eclipse.ptp.rdt.ui.editor.CEditor" name="TesteBlackLib.cpp" partName="TesteBlackLib.cpp" path="/home/ricardo/Documents/ProjetoEmbarcados/TesteBlackLib/src/TesteBlackLib.cpp" title="TesteBlackLib.cpp" tooltip="TesteBlackLib/src/TesteBlackLib.cpp" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/TesteBlackLib/src/TesteBlackLib.cpp"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="7434" selectionTopPixel="4998"/>
+>>>>>>> Final
 </editor>
 </editors>
 <views>
@@ -261,7 +271,10 @@
 <editors>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ptp.rdt.ui.editor.CEditor" path="/TesteBlackLib/TesteBlackLib.cpp"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ptp.rdt.ui.editor.CEditor" path="/TesteBlackLib/src/TesteBlackLib.cpp"/>
+<<<<<<< HEAD
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ptp.rdt.ui.editor.CEditor" path="/TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h"/>
+=======
+>>>>>>> Final
 </editors>
 <item historyLabel="TesteBlackLib.cpp" index="0">
 <position info="not_deleted" x="0" y="0"/>
@@ -272,6 +285,7 @@
 <item historyLabel="TesteBlackLib.cpp" index="1">
 <position info="not_deleted" x="14839" y="0"/>
 </item>
+<<<<<<< HEAD
 <item historyLabel="TesteBlackLib.cpp" index="1">
 <position info="not_deleted" x="7597" y="0"/>
 </item>
@@ -310,6 +324,10 @@
 </item>
 <item active="true" historyLabel="BlackThread.h" index="2">
 <position info="not_deleted" x="35848" y="0"/>
+=======
+<item active="true" historyLabel="TesteBlackLib.cpp" index="1">
+<position info="not_deleted" x="11603" y="0"/>
+>>>>>>> Final
 </item>
 </navigationHistory>
 <input factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/" type="8"/>
@@ -328,9 +346,12 @@
 </trimLayout>
 </window>
 <mruList>
+<<<<<<< HEAD
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ptp.rdt.ui.editor.CEditor" name="BlackThread.h" tooltip="TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h">
 <persistable path="/TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h"/>
 </file>
+=======
+>>>>>>> Final
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ptp.rdt.ui.editor.CEditor" name="TesteBlackLib.cpp" tooltip="TesteBlackLib/src/TesteBlackLib.cpp">
 <persistable path="/TesteBlackLib/src/TesteBlackLib.cpp"/>
 </file>
@@ -352,5 +373,11 @@
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ptp.rdt.ui.editor.CEditor" name="BlackMutex.h" tooltip="TesteBlackLib/src/BlackLib/BlackMutex/BlackMutex.h">
 <persistable path="/TesteBlackLib/src/BlackLib/BlackMutex/BlackMutex.h"/>
 </file>
+<<<<<<< HEAD
+=======
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ptp.rdt.ui.editor.CEditor" name="BlackThread.h" tooltip="TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h">
+<persistable path="/TesteBlackLib/src/BlackLib/BlackThread/BlackThread.h"/>
+</file>
+>>>>>>> Final
 </mruList>
 </workbench>

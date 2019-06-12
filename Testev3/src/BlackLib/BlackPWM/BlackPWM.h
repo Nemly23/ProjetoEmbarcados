@@ -99,6 +99,9 @@ namespace BlackLib
             errorCorePWM    *pwmCoreErrors;             /*!< @brief is used to hold the errors of BlackCorePWM class */
             std::string     pwmTestPath;                /*!< @brief is used to hold the pwm_test (pwm device driver) path */
             pwmName         pwmPinName;                 /*!< @brief is used to hold the selected pwm @b pin name */
+            std::string     expPath;
+
+            bool 		BlackCorePWM::export_pwm(pwmName pwm);
 
             /*! @brief Loads PWM overlays to device tree.
             *

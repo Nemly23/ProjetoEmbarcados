@@ -1,0 +1,15 @@
+11:04:19 **** Incremental Build of configuration Debug for project TesteBlackLib ****
+make all 
+Building file: ../src/TesteBlackLib.cpp
+Invoking: Cross G++ Compiler
+arm-linux-gnueabihf-g++ -O0 -g3 -Wall -c -fmessage-length=0 -std=c++11 -MMD -MP -MF"src/TesteBlackLib.d" -MT"src/TesteBlackLib.d" -o "src/TesteBlackLib.o" "../src/TesteBlackLib.cpp"
+Finished building: ../src/TesteBlackLib.cpp
+ 
+Building target: TesteBlackLib
+Invoking: Cross G++ Linker
+arm-linux-gnueabihf-g++  -o "TesteBlackLib"  ./src/BlackLib/examples/ExampleMain.o  ./src/BlackLib/BlackUART/BlackUART.o  ./src/BlackLib/BlackTime/BlackTime.o  ./src/BlackLib/BlackThread/BlackThread.o  ./src/BlackLib/BlackServo/BlackServo.o  ./src/BlackLib/BlackSPI/BlackSPI.o  ./src/BlackLib/BlackPWM/BlackPWM.o  ./src/BlackLib/BlackMutex/BlackMutex.o  ./src/BlackLib/BlackI2C/BlackI2C.o  ./src/BlackLib/BlackGPIO/BlackGPIO.o  ./src/BlackLib/BlackDirectory/BlackDirectory.o  ./src/BlackLib/BlackADC/BlackADC.o  ./src/BlackLib/AdafruitBBIOServo/AdafruitBBIOServo.o  ./src/BlackLib/AdafruitBBIOLib/bbio.o ./src/BlackLib/AdafruitBBIOLib/c_adc.o ./src/BlackLib/AdafruitBBIOLib/c_pinmux.o ./src/BlackLib/AdafruitBBIOLib/c_pwm.o ./src/BlackLib/AdafruitBBIOLib/c_uart.o ./src/BlackLib/AdafruitBBIOLib/common.o ./src/BlackLib/AdafruitBBIOLib/event_gpio.o ./src/BlackLib/AdafruitBBIOLib/gpio.o ./src/BlackLib/AdafruitBBIOLib/pwm.o  ./src/BlackLib/BlackCore.o  ./src/TesteBlackLib.o   -lpthread
+Finished building target: TesteBlackLib
+ 
+
+11:04:21 Build Finished (took 1s.967ms)
+

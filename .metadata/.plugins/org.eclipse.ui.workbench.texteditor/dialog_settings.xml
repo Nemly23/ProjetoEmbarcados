@@ -2,12 +2,17 @@
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="false" key="isRegEx"/>
+<<<<<<< HEAD
 		<item value="pause()" key="selection"/>
+=======
+		<item value=" turn_flag " key="selection"/>
+>>>>>>> Final
 		<item value="false" key="casesensitive"/>
 		<item value="false" key="incremental"/>
 		<item value="true" key="wrap"/>
 		<item value="false" key="wholeword"/>
 		<list key="findhistory">
+<<<<<<< HEAD
 			<item value="pause()"/>
 			<item value="error_i"/>
 			<item value=" angle_mag"/>
@@ -16,6 +21,13 @@
 			<item value="fim_flag"/>
 			<item value=" turn_flag "/>
 			<item value="Norte"/>
+=======
+			<item value=" turn_flag "/>
+			<item value="Norte"/>
+			<item value="giraNorte"/>
+			<item value="WAIT"/>
+			<item value="Recursive"/>
+>>>>>>> Final
 		</list>
 		<list key="replacehistory">
 		</list>
@@ -24,7 +36,12 @@
 		<item value="312" key="DIALOG_WIDTH"/>
 		<item value="1|Ubuntu|11.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 		<item value="436" key="DIALOG_HEIGHT"/>
+<<<<<<< HEAD
 		<item value="854" key="DIALOG_X_ORIGIN"/>
 		<item value="203" key="DIALOG_Y_ORIGIN"/>
+=======
+		<item value="860" key="DIALOG_X_ORIGIN"/>
+		<item value="216" key="DIALOG_Y_ORIGIN"/>
+>>>>>>> Final
 	</section>
 </section>
