@@ -1,8 +1,10 @@
-# ROBÔ ASPIRADOR DE PÓ...
+﻿# ROBÔ ASPIRADOR DE PÓ...
 
 Projeto desenvolvido para disciplina Sistemas Embarcados.
 
-![O robô](/imagens/robo.jpeg)
+<p align="center">
+  <img width="640" height="360" src=/imagens/robo.jpg>
+</p>
 
 ## ... que não aspira pó de verdade.
 Queremos simular o funcionamento de um aspirador de pó autônomo comercial: fazer uma varredura inteligente por todo o cômodo, evitando objetos e paredes.
@@ -13,9 +15,7 @@ Queremos simular o funcionamento de um aspirador de pó autônomo comercial: faz
 
 Esta varredura, como ilustrada acima, funciona em duas direções: começa com um zigue-zague em uma direção e, após atingir a parede oposta, faz o mesmo movimento no sentido perpendicular ao anterior, garantindo que todos os pontos da área sejam percorridos. 
 
-O robô em movimento segue uma sequência de funções que indica como deverá se comportar. Eventos detectados durante as varreduras (presença de paredes, objetos próximos, rotações de 90°) ativam _flags_ que, por sua vez, marcam a transição das funções. 
-
-Continuar funcionamento... 
+O robô em movimento segue uma sequência de funções que indica como deverá se comportar. Eventos detectados durante as varreduras (presença de paredes, objetos próximos, rotações de 90°) ativam _flags_ que, por sua vez, marcam a transição das funções.
 
 Vídeo de funcionamento: ...
 
@@ -24,6 +24,7 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 
 ### Lista de componentes
 
+< align="center">
 |               Componente               | Quantidade |
 |:--------------------------------------:|:----------:|
 |            Beaglebone Black            |      1     |
@@ -37,6 +38,7 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 |                Motor DC                |      2     |
 |           Botão de 2 estados           |      1     |
 |                  Chave                 |      1     |
+</p>
 
 ### Esquemático do circuito
 ![Circuito](/imagens/esquematico.jpg)
@@ -51,11 +53,19 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 ## Andamento do projeto
 
 - [x] Comunicação entre placa e host - SSH.
-- [x] Conserto da biblioteca da [PWM](https://github.com/yigityuce/BlackLib) (incompatibilidade com kernel 3.7+).
-- [x] PWM.
+- [x] Atualização da biblioteca de [PWM](https://github.com/yigityuce/BlackLib) (incompatibilidade com kernel 3.7+) para versão atual (4.14)
+
+```c
+case P8_13:
+	{
+		searchResult = "/sys/devices/platform/ocp/48304000.epwmss/48304200.pwm/pwm/pwmchip7";
+		break;
+	}
+```
+
 - [x] Ponte H. Alimentação pela BBB não é suficiente; colocada uma bateria de 7.4 V e um regulador de tensão (step down) para adequar entrada.
 - [x] Sensores ultrassônicos em funcionamento. 
 - [x] Lógica de funcionamento/varredura do espaço.
-- [x] Leitura do magnetômetro e giroscópio.
+- [x] Leitura do giroscópio da IMU.
 - [x] Integração dos componentes.
 - [x] Vídeo relatório.
