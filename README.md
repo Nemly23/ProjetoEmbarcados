@@ -8,7 +8,7 @@ Projeto desenvolvido para disciplina Sistemas Embarcados.
 Queremos simular o funcionamento de um aspirador de pó autônomo comercial: fazer uma varredura inteligente por todo o cômodo, evitando objetos e paredes.
 
 <p align="center">
-  <img width="600" height="200" src=/imagens/funcionamento.jpg>
+  <img width="500" height="500" src=/imagens/funcionamento.jpg>
 </p>
 
 Esta varredura, como ilustrada acima, funciona em duas direções: começa com um zigue-zague em uma direção e, após atingir a parede oposta, faz o mesmo movimento no sentido perpendicular ao anterior, garantindo que todos os pontos da área sejam percorridos. 
