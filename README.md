@@ -1,4 +1,4 @@
-﻿# ROBÔ ASPIRADOR DE PÓ...
+# ROBÔ ASPIRADOR DE PÓ...
 
 Projeto desenvolvido para disciplina Sistemas Embarcados.
 
@@ -7,6 +7,7 @@ Projeto desenvolvido para disciplina Sistemas Embarcados.
 ## ... que não aspira pó de verdade.
 Queremos simular o funcionamento de um aspirador de pó autônomo comercial: fazer uma varredura inteligente por todo o cômodo, evitando objetos e paredes.
 
+<<<<<<< HEAD
 <p align="center">
   <img width="500" height="500" src=/imagens/funcionamento.jpg>
 </p>
@@ -18,6 +19,9 @@ O robô em movimento segue uma sequência de funções que indica como deverá s
 Continuar funcionamento... 
 
 Vídeo de funcionamento: ...
+=======
+![Varredura](/imagens/funcionamento.jpg)
+>>>>>>> bad09439fed3bb5fb4bcc70c18566cb38e6611a3
 
 ## Como?
 Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de trabalho e três sensores ultrassônicos (HC-SR04) para detecção de objetos/colisões.
