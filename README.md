@@ -53,22 +53,26 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 - [x] Comunicação entre placa e host - SSH.
 - [x] Atualização da biblioteca de [PWM](https://github.com/yigityuce/BlackLib) (incompatibilidade com kernel 3.7+) para versão atual (4.14)
 
-Endereçamento direto do pino para PWM:
+> Endereçamento direto do pino para PWM:
 ```c
+(...)
 case P8_13:
 	{
 		searchResult = "/sys/devices/platform/ocp/48304000.epwmss/48304200.pwm/pwm/pwmchip7";
 		break;
 	}
+(...)
 ```
 
-Local para troca de modo do pino: de _default_ para _pwm_:
+> Local para troca de modo do pino: de _default_ para _pwm_:
 ```c
+(...)
 case P8_13:
 	{
 		searchResult = "/sys/devices/platform/ocp/ocp:P8_13_pinmux/state";
 		break;
 	}
+(...)
 ```
 
 - [x] Ponte H. Alimentação pela BBB não é suficiente; colocada uma bateria de 7.4 V e um regulador de tensão (step down) para adequar entrada.
