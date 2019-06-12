@@ -1,9 +1,9 @@
-﻿# ROBÔ ASPIRADOR DE PÓ...
+# ROBÔ ASPIRADOR DE PÓ...
 
 Projeto desenvolvido para disciplina Sistemas Embarcados.
 
 <p align="center">
-  <img width="640" height="360" src=/imagens/robo.jpg>
+  <img width="640" height="360" src=/imagens/robo.jpeg>
 </p>
 
 ## ... que não aspira pó de verdade.
@@ -24,7 +24,6 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 
 ### Lista de componentes
 
-< align="center">
 |               Componente               | Quantidade |
 |:--------------------------------------:|:----------:|
 |            Beaglebone Black            |      1     |
@@ -38,7 +37,6 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 |                Motor DC                |      2     |
 |           Botão de 2 estados           |      1     |
 |                  Chave                 |      1     |
-</p>
 
 ### Esquemático do circuito
 ![Circuito](/imagens/esquematico.jpg)
@@ -55,6 +53,7 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 - [x] Comunicação entre placa e host - SSH.
 - [x] Atualização da biblioteca de [PWM](https://github.com/yigityuce/BlackLib) (incompatibilidade com kernel 3.7+) para versão atual (4.14)
 
+Endereçamento direto do pino para PWM:
 ```c
 case P8_13:
 	{
@@ -63,9 +62,18 @@ case P8_13:
 	}
 ```
 
+Local para troca de modo do pino: de _default_ para _pwm_:
+```c
+case P8_13:
+	{
+		searchResult = "/sys/devices/platform/ocp/ocp:P8_13_pinmux/state";
+		break;
+	}
+```
+
 - [x] Ponte H. Alimentação pela BBB não é suficiente; colocada uma bateria de 7.4 V e um regulador de tensão (step down) para adequar entrada.
-- [x] Sensores ultrassônicos em funcionamento. 
+- [x] Sensores ultrassônicos em funcionamento.
 - [x] Lógica de funcionamento/varredura do espaço.
 - [x] Leitura do giroscópio da IMU.
 - [x] Integração dos componentes.
-- [x] Vídeo relatório.
+- [x] Vídeo do robô em funcionamento.
