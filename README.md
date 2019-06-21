@@ -69,7 +69,7 @@ Como é feita a compilação cruzada, o arquivo executável é enviado para o _t
 #### Bibliotecas de terceiros
 Adequação da biblioteca de [PWM](https://github.com/yigityuce/BlackLib), que apresenta incompatibilidade com kernel 3.7+, para versão atual (4.14).
 
-> Endereçamento direto do pino para PWM:
+1. Endereçamento direto do pino para PWM:
 ```c
 (...)
 case P8_13:
@@ -80,7 +80,7 @@ case P8_13:
 (...)
 ```
 
-> Diretório para troca de modo dos pinos GPIO - _default_ ou _pwm_:
+2. Diretório para troca de modo dos pinos GPIO - _default_ ou _pwm_:
 ```c
 (...)
 case P8_13:
@@ -115,7 +115,7 @@ São monitoradas as distâncias frontais e laterais no robô. A frontal impede q
 #### IMU
 As direções que o robô seguem são definidas pelo giroscópio. A velocidade angular medida pelo sensor é convertida para os ângulos de cada eixo, mas usa-se somente o de _yaw_, em torno do eixo z. 
 
-O norte do carrinho é sempre a direção para a qual ele aponta. Para o alinhamento correto com as direções de giro e passo, muda-se a referência deste norte. Assim, nas funções _turn_90_ e _follow_direction_, respectivamente, temos:
+O norte do carrinho é sempre a direção para a qual ele aponta. Para o alinhamento correto com as direções de giro e passo, muda-se a referência deste norte. Assim, nas funções `<turn_90>` e `<follow_direction>`, respectivamente, temos:
 
 ```c
 (...)
@@ -183,4 +183,4 @@ O robô realiza uma série de movimentos sequenciais; o conjunto destas 9 funç�
 
 Inicialmente, ele deve ser sempre colocado junto a uma parede, esquerda ou direita, de onde ele mantém uma distância fixa. Então, como ilustrado anteriormente, segue em linha reta de um lado ao outro, até atingir a parede oposta, onde para uma vez. Realiza uma rotação de 90° (o sentido depende da parede em que inicia), dá um passo fixo para alinhamento com a próxima linha de varredura, gira novamente, posicionando-se a 180° da direção inicial e faz a trajetória contrária, voltando para o lado de onde saiu.
 
-Esta sequência é repetida até que encontre a parede oposta, quando executa o mesmo padrão na direção cruzada. 
+Esta sequência é repetida até que encontre a parede oposta, quando executa o mesmo padrão na direção cruzada. O robô finaliza sua execução quando...
