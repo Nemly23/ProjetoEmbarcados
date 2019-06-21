@@ -2,7 +2,7 @@
 
 Projeto desenvolvido para disciplina Sistemas Embarcados.
 
-Vídeo de apresentação: link
+Vídeo de apresentação: [link]
 
 <p align="center">
   <img width="640" height="360" src=/imagens/robo.jpeg>
@@ -17,7 +17,7 @@ Queremos simular o funcionamento de um aspirador de pó autônomo comercial: faz
 
 Esta varredura, como ilustrada acima, funciona em duas direções: começa com um zigue-zague em uma direção e, após atingir a parede oposta, faz o mesmo movimento no sentido perpendicular ao anterior, garantindo que todos os pontos da área sejam percorridos. 
 
-Vídeo de funcionamento: link
+Vídeo de funcionamento: [link]
 
 ## Quem?
 
@@ -49,9 +49,21 @@ Uma IMU (MinIMU-9 v2, POLOLU) para localização e navegação no ambiente de tr
 ![Circuito](/imagens/esquematico.jpg)
 
 ### Andamento do projeto
+
+#### Inicialização
+Instalação do Debian em cartão SD para [boot](https://beagleboard.org/getting-started) na placa.
+
+---
+#### Configuração da IDE
+Colocar coisas que precisa ajustar no Eclipe para gerar o _makefile_.
+
 ---
 #### Comunicação
-Comunicação entre target e host por SSH.
+Comunicação entre _target_ e _host_ por SSH: 
+> ssh debian@\[IP]
+
+Como é feita a compilação cruzada, o arquivo executável é enviado para o _target_:
+> scp \[arquivo] debian@\[IP]:/home/debian
 
 ---
 #### Bibliotecas de terceiros
@@ -68,7 +80,7 @@ case P8_13:
 (...)
 ```
 
-> Local para troca de modo do pino: de _default_ para _pwm_:
+> Diretório para troca de modo dos pinos GPIO - _default_ ou _pwm_:
 ```c
 (...)
 case P8_13:
@@ -99,23 +111,11 @@ Para envio do sinal, a porta _trigger_ do sensor deve estar em nível lógico al
 
 São monitoradas as distâncias frontais e laterais no robô. A frontal impede que ocorra uma colisão; as laterais, além de indicarem a distância que devem manter da parede, também servem para identificação de objetos próximos que devem ser evitados durante a trajetória linear.
 
----
-#### Lógica de funcionamento
-O robô realiza uma série de movimentos sequenciais; o conjunto destas 9 funções dita a varredura completa pela área de trabalho:
-
-<p align="center">
-  <img width="600" height="600" src=/imagens/funcoes.jpg>
-</p>
-
-Inicialmente, ele deve ser sempre colocado junto a uma parede, esquerda ou direita, de onde ele mantém uma distância fixa. Então, como ilustrado anteriormente, segue em linha reta de um lado ao outro, até atingir a parede oposta, onde para uma vez. Realiza uma rotação de 90° (o sentido depende da parede em que inicia), dá um passo fixo para alinhamento com a próxima linha de varredura, gira novamente, posicionando-se a 180° da direção inicial e faz a trajetória contrária, voltando para o lado de onde saiu.
-
-Esta sequência é repetida até que encontre a parede oposta, quando executa o mesmo padrão na direção cruzada.
-
 ----
 #### IMU
-Estas direções que o robô seguem são definidas pelo giroscópio. A velocidade angular medida é convertida para os ângulos de cada eixo, mas usa-se somente o de _yaw_, em torno do eixo z. 
+As direções que o robô seguem são definidas pelo giroscópio. A velocidade angular medida pelo sensor é convertida para os ângulos de cada eixo, mas usa-se somente o de _yaw_, em torno do eixo z. 
 
-O norte do carrinho é sempre a direção na qual ele aponta. Para o alinhamento correto com as direções de giro e passo, muda-se a referência deste norte. Assim, nas funções _turn_90_ e _follow_direction_, respectivamente, temos:
+O norte do carrinho é sempre a direção para a qual ele aponta. Para o alinhamento correto com as direções de giro e passo, muda-se a referência deste norte. Assim, nas funções _turn_90_ e _follow_direction_, respectivamente, temos:
 
 ```c
 (...)
@@ -172,3 +172,15 @@ if (angle_ref < -180)
 }
 (...)
 ```
+
+---
+#### Lógica de funcionamento
+O robô realiza uma série de movimentos sequenciais; o conjunto destas 9 funções dita a varredura completa pela área de trabalho:
+
+<p align="center">
+  <img width="600" height="600" src=/imagens/funcoes.jpg>
+</p>
+
+Inicialmente, ele deve ser sempre colocado junto a uma parede, esquerda ou direita, de onde ele mantém uma distância fixa. Então, como ilustrado anteriormente, segue em linha reta de um lado ao outro, até atingir a parede oposta, onde para uma vez. Realiza uma rotação de 90° (o sentido depende da parede em que inicia), dá um passo fixo para alinhamento com a próxima linha de varredura, gira novamente, posicionando-se a 180° da direção inicial e faz a trajetória contrária, voltando para o lado de onde saiu.
+
+Esta sequência é repetida até que encontre a parede oposta, quando executa o mesmo padrão na direção cruzada. 
