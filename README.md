@@ -2,7 +2,7 @@
 
 Projeto desenvolvido para disciplina Sistemas Embarcados.
 
-Vídeo de apresentação: [link]
+Vídeo de apresentação e funcionamento: [🎬🎥🚗](https://youtu.be/IGNw8D5H5aE)
 
 <p align="center">
   <img width="640" height="360" src=/imagens/robo.jpeg>
@@ -16,8 +16,6 @@ Queremos simular o funcionamento de um aspirador de pó autônomo comercial: faz
 </p>
 
 Esta varredura, como ilustrada acima, funciona em duas direções: começa com um zigue-zague em uma direção e, após atingir a parede oposta, faz o mesmo movimento no sentido perpendicular ao anterior, garantindo que todos os pontos da área sejam percorridos. 
-
-Vídeo de funcionamento: [link]
 
 ## Quem?
 
@@ -55,15 +53,14 @@ Instalação do Debian em cartão SD para [boot](https://beagleboard.org/getting
 
 ---
 #### Configuração da IDE
-Colocar coisas que precisa ajustar no Eclipe para gerar o _makefile_.
 
 ---
 #### Comunicação
 Comunicação entre _target_ e _host_ por SSH: 
-> ssh debian@\[IP]
+> ssh debian@\<IP>
 
 Como é feita a compilação cruzada, o arquivo executável é enviado para o _target_:
-> scp \[arquivo] debian@\[IP]:/home/debian
+> scp \<arquivo.exe> debian@\<IP>:/home/debian
 
 ---
 #### Bibliotecas de terceiros
@@ -183,4 +180,4 @@ O robô realiza uma série de movimentos sequenciais; o conjunto destas 9 funç�
 
 Inicialmente, ele deve ser sempre colocado junto a uma parede, esquerda ou direita, de onde ele mantém uma distância fixa. Então, como ilustrado anteriormente, segue em linha reta de um lado ao outro, até atingir a parede oposta, onde para uma vez. Realiza uma rotação de 90° (o sentido depende da parede em que inicia), dá um passo fixo para alinhamento com a próxima linha de varredura, gira novamente, posicionando-se a 180° da direção inicial e faz a trajetória contrária, voltando para o lado de onde saiu.
 
-Esta sequência é repetida até que encontre a parede oposta, quando executa o mesmo padrão na direção cruzada. O robô finaliza sua execução quando...
+Esta sequência é repetida até que encontre a parede oposta; quando identifica paredes em sequência, marca o inínio deste mesmo padrão de varredura na direção cruzada. O robô finaliza sua execução quando se depara com as paredes sequenciais pela segunda vez.
